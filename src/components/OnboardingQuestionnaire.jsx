@@ -36,8 +36,8 @@ function OnboardingQuestionnaire() {
       subtitle: 'Isso nos ajuda a personalizar sua experiência',
       type: 'radio',
       options: [
-        { value: 'barber', label: 'Sou barbeiro/profissional', icon: 'content_cut' },
-        { value: 'business', label: 'Tenho um estabelecimento', icon: 'store' },
+        { value: 'business', label: 'Tenho um estabelecimento (Dono)', icon: 'store' },
+        { value: 'barber', label: 'Sou barbeiro/profissional (Funcionário)', icon: 'content_cut' },
         { value: 'client', label: 'Sou cliente', icon: 'person' }
       ]
     },
@@ -47,12 +47,12 @@ function OnboardingQuestionnaire() {
       subtitle: 'Como seu estabelecimento é conhecido?',
       type: 'text',
       placeholder: 'Ex: Barbearia do João',
-      condition: (answers) => answers.userType === 'business' || answers.userType === 'barber'
+      condition: (answers) => answers.userType === 'business'
     },
     {
       id: 'services',
-      title: 'Quais serviços você oferece?',
-      subtitle: 'Selecione todos que se aplicam',
+      title: 'Quais serviços você domina?',
+      subtitle: 'Selecione todas as suas habilidades',
       type: 'checkbox',
       options: [
         { value: 'haircut', label: 'Corte de cabelo' },
@@ -155,7 +155,8 @@ function OnboardingQuestionnaire() {
         userType: answers.userType,
         services: answers.services || [],
         preferences: answers.preferences || [],
-        onboardingCompleted: true
+        onboardingCompleted: true,
+        isOwner: answers.userType === 'business' // Apenas donos de estabelecimento
       }
       
       // Adicionar campos opcionais apenas se tiverem valor
@@ -258,7 +259,14 @@ function OnboardingQuestionnaire() {
             placeholder={currentQuestion.placeholder}
             value={answers[currentQuestion.id] || ''}
             onChange={(e) => handleAnswer(currentQuestion.id, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleNext()
+              }
+            }}
             className="w-full p-4 bg-surface-dark border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            autoFocus
           />
         )
 

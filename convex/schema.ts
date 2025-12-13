@@ -51,12 +51,7 @@ export default defineSchema({
     ownerId: v.optional(v.string()),
     name: v.string(),
     description: v.optional(v.string()),
-    category: v.union(
-      v.literal("Hair"),
-      v.literal("Beard"),
-      v.literal("Combo"),
-      v.literal("Coloring")
-    ),
+    category: v.optional(v.string()),
     durationMinutes: v.number(), // > 0
     price: v.number(), // >= 0
     status: v.union(v.literal("active"), v.literal("inactive")),
@@ -203,13 +198,32 @@ export default defineSchema({
     businessName: v.optional(v.string()),
     services: v.array(v.string()), // Array of service types
     experience: v.optional(v.string()), // 'beginner', 'intermediate', 'experienced', 'expert'
-    location: v.optional(v.string()),
+    location: v.optional(v.string()), // Cidade
+    address: v.optional(v.string()), // Endereço completo
     phone: v.optional(v.string()),
     preferences: v.array(v.string()), // Array of style preferences
     availability: v.optional(v.string()), // Availability preferences
     onboardingCompleted: v.boolean(),
+    linkedToOwnerId: v.optional(v.string()), // Para funcionários: ID do dono da barbearia
+    isOwner: v.optional(v.boolean()), // true para donos de estabelecimento
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("clerkId", ["clerkId"]),
+    .index("clerkId", ["clerkId"])
+    .index("linkedToOwnerId", ["linkedToOwnerId"]),
+
+  // 12. Tabela de Solicitações de Vínculo (Funcionários → Barbearias)
+  linkRequests: defineTable({
+    employeeId: v.string(), // clerkId do funcionário
+    ownerId: v.string(), // clerkId do dono da barbearia
+    employeeName: v.string(),
+    employeePhone: v.optional(v.string()),
+    employeeExperience: v.optional(v.string()),
+    employeeServices: v.array(v.string()),
+    status: v.string(), // 'pending', 'accepted', 'rejected'
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("ownerId_status", ["ownerId", "status"])
+    .index("employeeId", ["employeeId"]),
 });

@@ -1,9 +1,26 @@
 import { useNavigate } from 'react-router-dom'
+import { useUser, useClerk } from '@clerk/clerk-react'
 
 function WelcomePage() {
   const navigate = useNavigate()
+  const { user } = useUser()
+  const { signOut } = useClerk()
+
   return (
     <div className="min-h-screen bg-green-950">
+      {/* Botão de Sair se estiver logado */}
+      {user && (
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={() => signOut()}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-md transition-all flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-sm">logout</span>
+            Sair
+          </button>
+        </div>
+      )}
+      
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
           {/* Logo e Título */}

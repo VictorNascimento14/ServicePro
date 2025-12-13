@@ -15,6 +15,15 @@ import ClienteDetalhes from './pages/ClienteDetalhes'
 import Servicos from './pages/Servicos'
 import Financeiro from './pages/Financeiro'
 import Configuracoes from './pages/Configuracoes'
+import EditarPerfil from './pages/EditarPerfil'
+import SolicitarVinculo from './pages/SolicitarVinculo'
+import SolicitacoesVinculo from './pages/SolicitacoesVinculo'
+
+// Páginas de cliente
+import ClienteDashboard from './pages/client/ClienteDashboard'
+import Agendar from './pages/client/Agendar'
+import Historico from './pages/client/Historico'
+import Barbearias from './pages/client/Barbearias'
 
 function AppContent() {
   const { user, isLoaded } = useUser()
@@ -49,17 +58,47 @@ function AppContent() {
     )
   }
 
+  // Se é funcionário (barber sem isOwner) e não está vinculado, mostra tela de solicitar vínculo
+  const isEmployee = userProfile?.userType === 'barber' && !userProfile?.isOwner
+  if (isEmployee && !userProfile?.linkedToOwnerId) {
+    return (
+      <Routes>
+        <Route path="*" element={<SolicitarVinculo />} />
+      </Routes>
+    )
+  }
+
   // Se usuário está logado e completou onboarding, mostra dashboard
+  // Rotas diferentes para clientes e profissionais
+  const isClient = userProfile?.userType === 'client'
+  
   return (
     <Routes>
       <Route path="/" element={<DashboardLayout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="agenda" element={<Agenda />} />
-        <Route path="clientes" element={<Clientes />} />
-        <Route path="clientes/:id" element={<ClienteDetalhes />} />
-        <Route path="servicos" element={<Servicos />} />
-        <Route path="financeiro" element={<Financeiro />} />
-        <Route path="configuracoes" element={<Configuracoes />} />
+        {isClient ? (
+          // Rotas para clientes
+          <>
+            <Route index element={<ClienteDashboard />} />
+            <Route path="agendar" element={<Agendar />} />
+            <Route path="historico" element={<Historico />} />
+            <Route path="barbearias" element={<Barbearias />} />
+            <Route path="configuracoes" element={<Configuracoes />} />
+            <Route path="editar-perfil" element={<EditarPerfil />} />
+          </>
+        ) : (
+          // Rotas para profissionais/estabelecimentos
+          <>
+            <Route index element={<Dashboard />} />
+            <Route path="agenda" element={<Agenda />} />
+            <Route path="clientes" element={<Clientes />} />
+            <Route path="clientes/:id" element={<ClienteDetalhes />} />
+            <Route path="servicos" element={<Servicos />} />
+            <Route path="financeiro" element={<Financeiro />} />
+            <Route path="solicitacoes" element={<SolicitacoesVinculo />} />
+            <Route path="configuracoes" element={<Configuracoes />} />
+            <Route path="editar-perfil" element={<EditarPerfil />} />
+          </>
+        )}
       </Route>
     </Routes>
   )

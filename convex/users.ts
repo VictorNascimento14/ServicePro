@@ -1,6 +1,30 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// BARBEARIAS (para clientes visualizarem)
+
+// Buscar todas as barbearias
+export const getBarbearias = query({
+  args: { city: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const allProfiles = await ctx.db.query("userProfiles").collect();
+    
+    // Filtrar apenas barbearias (barber ou business)
+    let barbearias = allProfiles.filter(profile => 
+      profile.userType === 'barber' || profile.userType === 'business'
+    );
+    
+    // Filtrar por cidade se fornecida
+    if (args.city) {
+      barbearias = barbearias.filter(b => 
+        b.location?.toLowerCase().includes(args.city.toLowerCase())
+      );
+    }
+    
+    return barbearias;
+  },
+});
+
 // PROFISSIONAIS
 
 // Buscar todos os profissionais ativos
@@ -253,6 +277,17 @@ export const getUserProfile = query({
   },
 });
 
+// Buscar perfil do owner vinculado (para funcionários)
+export const getLinkedOwnerProfile = query({
+  args: { linkedToOwnerId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("userProfiles")
+      .withIndex("clerkId", (q) => q.eq("clerkId", args.linkedToOwnerId))
+      .first();
+  },
+});
+
 // Criar ou atualizar perfil do usuário
 export const updateUserProfile = mutation({
   args: {
@@ -263,10 +298,12 @@ export const updateUserProfile = mutation({
     services: v.array(v.string()),
     experience: v.optional(v.string()),
     location: v.optional(v.string()),
+    address: v.optional(v.string()),
     phone: v.optional(v.string()),
     preferences: v.array(v.string()),
     availability: v.optional(v.string()),
     onboardingCompleted: v.boolean(),
+    isOwner: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db

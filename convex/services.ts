@@ -4,6 +4,17 @@ import { v } from "convex/values";
 // SERVIÇOS
 
 // Buscar todos os serviços ativos
+export const getAll = query({
+  args: { ownerId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("services")
+      .withIndex("ownerId_status", (q) => q.eq("ownerId", args.ownerId).eq("status", "active"))
+      .collect();
+  },
+});
+
+// Buscar todos os serviços ativos
 export const getActiveServices = query({
   args: { ownerId: v.string() },
   handler: async (ctx, args) => {
@@ -51,15 +62,9 @@ export const createService = mutation({
     ownerId: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
-    category: v.union(
-      v.literal("Hair"),
-      v.literal("Beard"),
-      v.literal("Combo"),
-      v.literal("Coloring")
-    ),
-    durationMinutes: v.number(),
+    category: v.optional(v.string()),
+    duration: v.number(),
     price: v.number(),
-    iconUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -69,15 +74,17 @@ export const createService = mutation({
       name: args.name,
       description: args.description,
       category: args.category,
-      durationMinutes: args.durationMinutes,
+      durationMinutes: args.duration,
       price: args.price,
       status: "active",
-      iconUrl: args.iconUrl,
       createdAt: now,
       updatedAt: now,
     });
   },
 });
+
+// Alias para createService
+export const create = createService;
 
 // Atualizar serviço
 export const updateService = mutation({
@@ -86,15 +93,9 @@ export const updateService = mutation({
     ownerId: v.string(),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
-    category: v.optional(v.union(
-      v.literal("Hair"),
-      v.literal("Beard"),
-      v.literal("Combo"),
-      v.literal("Coloring")
-    )),
-    durationMinutes: v.optional(v.number()),
+    category: v.optional(v.string()),
+    duration: v.optional(v.number()),
     price: v.optional(v.number()),
-    iconUrl: v.optional(v.string()),
     status: v.optional(v.union(v.literal("active"), v.literal("inactive"))),
   },
   handler: async (ctx, args) => {
@@ -103,14 +104,25 @@ export const updateService = mutation({
       throw new Error("Serviço não encontrado ou não pertence ao owner");
     }
 
-    await ctx.db.patch(args.id, {
-      ...args,
+    const updateData: any = {
       updatedAt: Date.now(),
-    });
+    };
+    
+    if (args.name) updateData.name = args.name;
+    if (args.description !== undefined) updateData.description = args.description;
+    if (args.category !== undefined) updateData.category = args.category;
+    if (args.duration) updateData.durationMinutes = args.duration;
+    if (args.price !== undefined) updateData.price = args.price;
+    if (args.status) updateData.status = args.status;
+
+    await ctx.db.patch(args.id, updateData);
 
     return args.id;
   },
 });
+
+// Alias para updateService
+export const update = updateService;
 
 // Deletar serviço (soft delete)
 export const deleteService = mutation({
@@ -130,6 +142,9 @@ export const deleteService = mutation({
     return args.id;
   },
 });
+
+// Alias para deleteService
+export const remove = deleteService;
 
 // CONFIGURAÇÕES DO NEGÓCIO
 
