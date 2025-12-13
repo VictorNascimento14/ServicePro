@@ -11,6 +11,7 @@ function OnboardingQuestionnaire() {
 
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState({
+    userName: '',
     userType: '',
     businessName: '',
     services: [],
@@ -22,6 +23,13 @@ function OnboardingQuestionnaire() {
   })
 
   const questions = [
+    {
+      id: 'userName',
+      title: 'Como você gostaria de ser chamado?',
+      subtitle: 'Queremos deixar sua experiência mais personalizada',
+      type: 'text',
+      placeholder: 'Ex: João, Maria, Pedro...'
+    },
     {
       id: 'userType',
       title: 'Qual o seu perfil?',
@@ -141,15 +149,47 @@ function OnboardingQuestionnaire() {
 
   const handleComplete = async () => {
     try {
-      await updateUserProfile({
+      // Preparar dados - remover campos undefined
+      const profileData = {
         clerkId: user.id,
-        ...answers,
+        userType: answers.userType,
+        services: answers.services || [],
+        preferences: answers.preferences || [],
         onboardingCompleted: true
-      })
+      }
+      
+      // Adicionar campos opcionais apenas se tiverem valor
+      if (answers.userName && answers.userName.trim()) {
+        profileData.userName = answers.userName.trim()
+      }
+      if (answers.businessName && answers.businessName.trim()) {
+        profileData.businessName = answers.businessName.trim()
+      }
+      if (answers.experience) {
+        profileData.experience = answers.experience
+      }
+      if (answers.location && answers.location.trim()) {
+        profileData.location = answers.location.trim()
+      }
+      if (answers.phone && answers.phone.trim()) {
+        profileData.phone = answers.phone.trim()
+      }
+      if (answers.availability) {
+        profileData.availability = Array.isArray(answers.availability) 
+          ? answers.availability.join(', ') 
+          : answers.availability
+      }
+      
+      console.log('Enviando dados:', profileData)
+      
+      await updateUserProfile(profileData)
+      console.log('Perfil salvo com sucesso!')
+      
       // Redirect to dashboard
       navigate('/')
     } catch (error) {
-      console.error('Erro ao salvar perfil:', error)
+      console.error('Erro completo:', error)
+      alert('Erro ao salvar perfil. Por favor, tente novamente.')
     }
   }
 
@@ -274,8 +314,10 @@ function OnboardingQuestionnaire() {
           <button
             onClick={handleNext}
             disabled={
-              !answers[currentQuestion.id] ||
-              (Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].length === 0)
+              currentQuestion.id === 'phone' ? false : (
+                !answers[currentQuestion.id] ||
+                (Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].length === 0)
+              )
             }
             className="px-6 py-3 bg-primary hover:bg-primary-dark disabled:bg-gray-600 disabled:cursor-not-allowed text-primary-content rounded-xl font-bold shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:scale-105"
           >

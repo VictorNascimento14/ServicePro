@@ -4,7 +4,7 @@ import { v } from "convex/values";
 export default defineSchema({
   // 1. Tabela de Profissionais/Usuários
   usersProfessionals: defineTable({
-    ownerId: v.string(),
+    ownerId: v.optional(v.string()),
     firstName: v.string(),
     lastName: v.string(),
     email: v.string(),
@@ -23,7 +23,7 @@ export default defineSchema({
 
   // 2. Tabela de Clientes
   customers: defineTable({
-    ownerId: v.string(),
+    ownerId: v.optional(v.string()),
     fullName: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -48,7 +48,7 @@ export default defineSchema({
 
   // 3. Tabela de Serviços
   services: defineTable({
-    ownerId: v.string(),
+    ownerId: v.optional(v.string()),
     name: v.string(),
     description: v.optional(v.string()),
     category: v.union(
@@ -153,7 +153,7 @@ export default defineSchema({
 
   // 8. Tabela de Junção Profissionais-Serviços (N:N)
   professionalServices: defineTable({
-    ownerId: v.string(),
+    ownerId: v.optional(v.string()),
     professionalId: v.id("usersProfessionals"),
     serviceId: v.id("services"),
     createdAt: v.number(),
@@ -163,7 +163,7 @@ export default defineSchema({
 
   // 9. Tabela de Configurações do Negócio
   businessSettings: defineTable({
-    ownerId: v.string(),
+    ownerId: v.optional(v.string()),
     businessName: v.string(),
     logoUrl: v.optional(v.string()),
     address: v.optional(v.string()),
@@ -198,6 +198,7 @@ export default defineSchema({
   // 11. Tabela de Perfis de Usuário (Clerk Integration)
   userProfiles: defineTable({
     clerkId: v.string(),
+    userName: v.optional(v.string()), // Nome que o usuário quer ser chamado
     userType: v.string(), // 'barber', 'business', 'client'
     businessName: v.optional(v.string()),
     services: v.array(v.string()), // Array of service types

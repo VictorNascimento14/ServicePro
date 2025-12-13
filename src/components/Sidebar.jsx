@@ -1,8 +1,22 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
+import { useUser } from '@clerk/clerk-react'
+import { useQuery } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 
 function Sidebar({ currentPath }) {
   const { isDark, toggleTheme } = useTheme()
+  const { user } = useUser()
+  
+  // Buscar perfil do usuário
+  const userProfile = useQuery(api.users.getUserProfile, user ? { clerkId: user.id } : "skip")
+  const businessSettings = useQuery(api.services.getBusinessSettings, user ? { ownerId: user.id } : "skip")
+  
+  // Nome do usuário e negócio
+  const userName = userProfile?.userName || user?.firstName || user?.fullName?.split(' ')[0] || 'Usuário'
+  const businessName = userProfile?.userType === 'client' 
+    ? 'Cliente' 
+    : (userProfile?.businessName || businessSettings?.businessName || 'Sua Barbearia')
   const menuItems = [
     { icon: 'dashboard', label: 'Dashboard', path: '/' },
     { icon: 'calendar_today', label: 'Agenda', path: '/agenda' },
@@ -82,13 +96,14 @@ function Sidebar({ currentPath }) {
           <div
             className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-primary/20"
             style={{
-              backgroundImage:
-                'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBkxdMCsUSae2X4zyWR-qGZD7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMOlcbNbXV64J4imo4x94pZs_N5vRV204jNaiIMybw2cXLyk_CKt1vftRBOSIlayZVKI5mrCvqo4xq2o44EZXryEPkeAlzC4vY8iDHJzMrq7trZ5bLH5YO7GJNu1GOrPXCoHb83hbx8LCOhawLGD3OBDn8zbRxQx5etgAgMMQYhY905RDZWl2O_0EWqML9GP2UqttG4P6pMnqmhFfqo")',
+              backgroundImage: user?.imageUrl 
+                ? `url("${user.imageUrl}")`
+                : 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBkxdMCsUSae2X4zyWR-qGZD7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMOlcbNbXV64J4imo4x94pZs_N5vRV204jNaiIMybw2cXLyk_CKt1vftRBOSIlayZVKI5mrCvqo4xq2o44EZXryEPkeAlzC4vY8iDHJzMrq7trZ5bLH5YO7GJNu1GOrPXCoHb83hbx8LCOhawLGD3OBDn8zbRxQx5etgAgMMQYhY905RDZWl2O_0EWqML9GP2UqttG4P6pMnqmhFfqo")',
             }}
           />
           <div className="flex flex-col">
-            <p className="text-sm font-bold text-text-main dark:text-white">Marcos Silva</p>
-            <p className="text-xs text-text-muted">Barbearia VIP</p>
+            <p className="text-sm font-bold text-text-main dark:text-white">{userName}</p>
+            <p className="text-xs text-text-muted">{businessName}</p>
           </div>
         </div>
       </div>

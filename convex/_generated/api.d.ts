@@ -8,9 +8,13 @@
  * @module
  */
 
+import type * as appointmentRequests from "../appointmentRequests.js";
 import type * as appointments from "../appointments.js";
+import type * as notificationTemplates from "../notificationTemplates.js";
 import type * as seed from "../seed.js";
+import type * as serviceHistory from "../serviceHistory.js";
 import type * as services from "../services.js";
+import type * as timeBlocks from "../timeBlocks.js";
 import type * as users from "../users.js";
 
 import type {
@@ -20,9 +24,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  appointmentRequests: typeof appointmentRequests;
   appointments: typeof appointments;
+  notificationTemplates: typeof notificationTemplates;
   seed: typeof seed;
+  serviceHistory: typeof serviceHistory;
   services: typeof services;
+  timeBlocks: typeof timeBlocks;
   users: typeof users;
 }>;
 

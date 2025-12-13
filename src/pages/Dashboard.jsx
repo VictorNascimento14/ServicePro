@@ -1,12 +1,26 @@
 import PageHeader from '../components/PageHeader'
 import { useUser, useClerk } from '@clerk/clerk-react'
-import { useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 
 function Dashboard() {
   const { user } = useUser()
   const { signOut } = useClerk()
   const resetProfile = useMutation(api.users.resetUserProfile)
+  
+  // Buscar perfil do usuário e configurações
+  const userProfile = useQuery(api.users.getUserProfile, user ? { clerkId: user.id } : "skip")
+  const businessSettings = useQuery(api.services.getBusinessSettings, user ? { ownerId: user.id } : "skip")
+  const appointments = useQuery(api.appointments.getByDate, user ? { ownerId: user.id, date: new Date().toISOString().split('T')[0] } : "skip")
+  
+  // Nome do usuário e negócio
+  const userName = userProfile?.userName || user?.firstName || user?.fullName?.split(' ')[0] || 'Usuário'
+  const businessName = userProfile?.userType === 'client' 
+    ? 'Cliente' 
+    : (userProfile?.businessName || businessSettings?.businessName || 'Sua Barbearia')
+  
+  // Estatísticas baseadas em dados reais
+  const todayAppointments = appointments?.length || 0
   const searchBar = (
     <div className="relative group">
       <div className="flex items-center bg-white dark:bg-surface-dark rounded-full px-4 py-2.5 shadow-sm border border-transparent focus-within:border-primary transition-all w-80">
@@ -56,7 +70,7 @@ function Dashboard() {
     <>
       <PageHeader
         title="Visão Geral"
-        subtitle="Aqui está o resumo do seu dia, Marcos."
+        subtitle={`Bem-vindo, ${userName}! ${businessName}`}
         actions={
           <>
             {searchBar}
@@ -76,11 +90,11 @@ function Dashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-text-muted dark:text-gray-400">Agendamentos Hoje</p>
-              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">8</h3>
+              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">{todayAppointments}</h3>
             </div>
-            <div className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-primary">
-              <span className="material-symbols-outlined text-[16px]">trending_up</span>
-              <span>+2 que ontem</span>
+            <div className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+              <span>Hoje</span>
             </div>
           </div>
 
@@ -90,10 +104,10 @@ function Dashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-text-muted dark:text-gray-400">Faturamento Previsto</p>
-              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">R$ 1.200</h3>
+              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">R$ 0,00</h3>
             </div>
             <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-2">
-              <div className="bg-primary h-1.5 rounded-full" style={{ width: '75%' }}></div>
+              <div className="bg-primary h-1.5 rounded-full" style={{ width: '0%' }}></div>
             </div>
           </div>
 
@@ -103,13 +117,29 @@ function Dashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-text-muted dark:text-gray-400">Solicitações Pendentes</p>
-              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">3</h3>
+              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">0</h3>
             </div>
             <p className="text-xs text-text-muted dark:text-gray-500 mt-1">Requer sua atenção</p>
           </div>
         </section>
 
-        {/* Main Grid Layout */}
+        {/* Mensagem quando não há dados */}
+        {todayAppointments === 0 && (
+          <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-800 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <span className="material-symbols-outlined text-[80px] text-gray-300 dark:text-gray-600">event_available</span>
+              <div>
+                <h3 className="text-lg font-bold text-text-main dark:text-white mb-2">Nenhum agendamento hoje</h3>
+                <p className="text-sm text-text-muted dark:text-gray-400">
+                  Comece criando seus clientes, serviços e profissionais nas páginas do menu lateral.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Grid Layout - só mostra se tiver dados */}
+        {todayAppointments > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
@@ -295,6 +325,7 @@ function Dashboard() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </>
   )

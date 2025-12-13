@@ -5,10 +5,11 @@ import { v } from "convex/values";
 
 // Buscar todos os serviços ativos
 export const getActiveServices = query({
-  handler: async (ctx) => {
+  args: { ownerId: v.string() },
+  handler: async (ctx, args) => {
     return await ctx.db
       .query("services")
-      .withIndex("status", (q) => q.eq("status", "active"))
+      .withIndex("ownerId_status", (q) => q.eq("ownerId", args.ownerId).eq("status", "active"))
       .collect();
   },
 });
@@ -16,6 +17,7 @@ export const getActiveServices = query({
 // Buscar serviços por categoria
 export const getServicesByCategory = query({
   args: {
+    ownerId: v.string(),
     category: v.union(
       v.literal("Hair"),
       v.literal("Beard"),
@@ -26,14 +28,27 @@ export const getServicesByCategory = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("services")
-      .withIndex("category", (q) => q.eq("category", args.category))
+      .withIndex("ownerId_category", (q) => q.eq("ownerId", args.ownerId).eq("category", args.category))
       .collect();
+  },
+});
+
+// Buscar serviço por ID
+export const getServiceById = query({
+  args: { id: v.id("services"), ownerId: v.string() },
+  handler: async (ctx, args) => {
+    const service = await ctx.db.get(args.id);
+    if (!service || service.ownerId !== args.ownerId) {
+      throw new Error("Serviço não encontrado ou não pertence ao owner");
+    }
+    return service;
   },
 });
 
 // Criar novo serviço
 export const createService = mutation({
   args: {
+    ownerId: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
     category: v.union(
@@ -44,17 +59,20 @@ export const createService = mutation({
     ),
     durationMinutes: v.number(),
     price: v.number(),
+    iconUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
 
     return await ctx.db.insert("services", {
+      ownerId: args.ownerId,
       name: args.name,
       description: args.description,
       category: args.category,
       durationMinutes: args.durationMinutes,
       price: args.price,
       status: "active",
+      iconUrl: args.iconUrl,
       createdAt: now,
       updatedAt: now,
     });
@@ -65,6 +83,7 @@ export const createService = mutation({
 export const updateService = mutation({
   args: {
     id: v.id("services"),
+    ownerId: v.string(),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
     category: v.optional(v.union(
@@ -75,12 +94,13 @@ export const updateService = mutation({
     )),
     durationMinutes: v.optional(v.number()),
     price: v.optional(v.number()),
+    iconUrl: v.optional(v.string()),
     status: v.optional(v.union(v.literal("active"), v.literal("inactive"))),
   },
   handler: async (ctx, args) => {
     const service = await ctx.db.get(args.id);
-    if (!service) {
-      throw new Error("Serviço não encontrado");
+    if (!service || service.ownerId !== args.ownerId) {
+      throw new Error("Serviço não encontrado ou não pertence ao owner");
     }
 
     await ctx.db.patch(args.id, {
@@ -92,12 +112,35 @@ export const updateService = mutation({
   },
 });
 
+// Deletar serviço (soft delete)
+export const deleteService = mutation({
+  args: { id: v.id("services"), ownerId: v.string() },
+  handler: async (ctx, args) => {
+    const service = await ctx.db.get(args.id);
+    if (!service || service.ownerId !== args.ownerId) {
+      throw new Error("Serviço não encontrado ou não pertence ao owner");
+    }
+
+    await ctx.db.patch(args.id, {
+      status: "inactive",
+      deletedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return args.id;
+  },
+});
+
 // CONFIGURAÇÕES DO NEGÓCIO
 
-// Buscar configurações (sempre retorna apenas uma linha)
+// Buscar configurações
 export const getBusinessSettings = query({
-  handler: async (ctx) => {
-    const settings = await ctx.db.query("businessSettings").first();
+  args: { ownerId: v.string() },
+  handler: async (ctx, args) => {
+    const settings = await ctx.db
+      .query("businessSettings")
+      .filter((q) => q.eq(q.field("ownerId"), args.ownerId))
+      .first();
     return settings;
   },
 });
@@ -105,6 +148,7 @@ export const getBusinessSettings = query({
 // Criar/atualizar configurações do negócio
 export const upsertBusinessSettings = mutation({
   args: {
+    ownerId: v.string(),
     businessName: v.string(),
     logoUrl: v.optional(v.string()),
     address: v.optional(v.string()),
@@ -114,7 +158,10 @@ export const upsertBusinessSettings = mutation({
     notificationSettings: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db.query("businessSettings").first();
+    const existing = await ctx.db
+      .query("businessSettings")
+      .filter((q) => q.eq(q.field("ownerId"), args.ownerId))
+      .first();
 
     const now = Date.now();
 
@@ -132,6 +179,7 @@ export const upsertBusinessSettings = mutation({
       return existing._id;
     } else {
       return await ctx.db.insert("businessSettings", {
+        ownerId: args.ownerId,
         businessName: args.businessName,
         logoUrl: args.logoUrl,
         address: args.address,
@@ -151,11 +199,11 @@ export const upsertBusinessSettings = mutation({
 
 // Buscar serviços de um profissional
 export const getServicesByProfessional = query({
-  args: { professionalId: v.id("usersProfessionals") },
+  args: { professionalId: v.id("usersProfessionals"), ownerId: v.string() },
   handler: async (ctx, args) => {
     const relations = await ctx.db
       .query("professionalServices")
-      .withIndex("professionalId", (q) => q.eq("professionalId", args.professionalId))
+      .withIndex("ownerId_professionalId", (q) => q.eq("ownerId", args.ownerId).eq("professionalId", args.professionalId))
       .collect();
 
     const serviceIds = relations.map(r => r.serviceId);
@@ -175,6 +223,7 @@ export const getServicesByProfessional = query({
 // Adicionar serviço a profissional
 export const addServiceToProfessional = mutation({
   args: {
+    ownerId: v.string(),
     professionalId: v.id("usersProfessionals"),
     serviceId: v.id("services"),
   },
@@ -182,8 +231,8 @@ export const addServiceToProfessional = mutation({
     // Verificar se já existe
     const existing = await ctx.db
       .query("professionalServices")
-      .withIndex("professionalId", (q) =>
-        q.eq("professionalId", args.professionalId)
+      .withIndex("ownerId_professionalId", (q) =>
+        q.eq("ownerId", args.ownerId).eq("professionalId", args.professionalId)
       )
       .filter((q) => q.eq(q.field("serviceId"), args.serviceId))
       .first();
@@ -193,6 +242,7 @@ export const addServiceToProfessional = mutation({
     }
 
     return await ctx.db.insert("professionalServices", {
+      ownerId: args.ownerId,
       professionalId: args.professionalId,
       serviceId: args.serviceId,
       createdAt: Date.now(),
@@ -203,14 +253,15 @@ export const addServiceToProfessional = mutation({
 // Remover serviço de profissional
 export const removeServiceFromProfessional = mutation({
   args: {
+    ownerId: v.string(),
     professionalId: v.id("usersProfessionals"),
     serviceId: v.id("services"),
   },
   handler: async (ctx, args) => {
     const relation = await ctx.db
       .query("professionalServices")
-      .withIndex("professionalId", (q) =>
-        q.eq("professionalId", args.professionalId)
+      .withIndex("ownerId_professionalId", (q) =>
+        q.eq("ownerId", args.ownerId).eq("professionalId", args.professionalId)
       )
       .filter((q) => q.eq(q.field("serviceId"), args.serviceId))
       .first();

@@ -89,7 +89,10 @@ export const update = mutation({
     if (args.email && args.email !== professional.email) {
       const existing = await ctx.db
         .query("usersProfessionals")
-        .withIndex("ownerId_email", (q) => q.eq("ownerId", args.ownerId).eq("email", args.email))
+        .filter((q) => q.and(
+          q.eq(q.field("ownerId"), args.ownerId),
+          q.eq(q.field("email"), args.email)
+        ))
         .first();
 
       if (existing) {
@@ -228,10 +231,12 @@ export const updateCustomer = mutation({
 export const getCustomersByTag = query({
   args: { tag: v.string(), ownerId: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const allCustomers = await ctx.db
       .query("customers")
-      .filter((q) => q.eq(q.field("ownerId"), args.ownerId) && q.neq(q.field("tags").indexOf(args.tag), -1))
+      .filter((q) => q.eq(q.field("ownerId"), args.ownerId))
       .collect();
+    
+    return allCustomers.filter(customer => customer.tags.includes(args.tag));
   },
 });
 
@@ -252,6 +257,7 @@ export const getUserProfile = query({
 export const updateUserProfile = mutation({
   args: {
     clerkId: v.string(),
+    userName: v.optional(v.string()),
     userType: v.string(),
     businessName: v.optional(v.string()),
     services: v.array(v.string()),
