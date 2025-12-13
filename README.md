@@ -1,3 +1,4 @@
+HEAD
 # ServicePro Dashboard
 
 Dashboard moderno e responsivo para gerenciamento de serviços, desenvolvido com React, Tailwind CSS, Clerk e Convex.
@@ -176,3 +177,7 @@ O projeto está preparado para usar Convex. Para ativar:
 
 Este projeto é de código aberto.
 
+=======
+# ServicePro
+Serviços de gerenciamento
+>>>>>>> 03bfc312fb84eaa3cd45f0c9db031e3fb907f287
