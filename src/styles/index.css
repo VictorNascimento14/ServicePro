@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar for better aesthetics */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+}
+
+/* Calendar grid lines pattern */
+.calendar-grid-bg {
+    background-size: 100% 80px;
+    background-image: linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+}
+
+.dark .calendar-grid-bg {
+    background-image: linear-gradient(to bottom, #2d4a3e 1px, transparent 1px);
+}
+
+/* Chart animations */
+@keyframes growUp {
+    from { height: 0; }
+}
+
+.bar-animate {
+    animation: growUp 1s ease-out forwards;
+}
+
