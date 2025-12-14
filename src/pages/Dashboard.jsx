@@ -13,6 +13,17 @@ function Dashboard() {
   const businessSettings = useQuery(api.services.getBusinessSettings, user ? { ownerId: user.id } : "skip")
   const appointments = useQuery(api.appointments.getByDate, user ? { ownerId: user.id, date: new Date().toISOString().split('T')[0] } : "skip")
   
+  // Buscar agendamentos do cliente (se for cliente)
+  const clientAppointments = useQuery(
+    api.appointments.getByClientClerkId,
+    user && userProfile?.userType === 'client' ? { clientClerkId: user.id } : "skip"
+  )
+
+  // Debug: ver o que está sendo retornado
+  console.log('User Profile:', userProfile)
+  console.log('Client Appointments:', clientAppointments)
+  console.log('User Type:', userProfile?.userType)
+  
   // Nome do usuário e negócio
   const userName = userProfile?.userName || user?.firstName || user?.fullName?.split(' ')[0] || 'Usuário'
   const businessName = userProfile?.userType === 'client' 
@@ -124,7 +135,7 @@ function Dashboard() {
         </section>
 
         {/* Mensagem quando não há dados */}
-        {todayAppointments === 0 && (
+        {todayAppointments === 0 && userProfile?.userType !== 'client' && (
           <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-800 text-center">
             <div className="flex flex-col items-center gap-4">
               <span className="material-symbols-outlined text-[80px] text-gray-300 dark:text-gray-600">event_available</span>
@@ -138,24 +149,163 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Main Grid Layout - só mostra se tiver dados */}
-        {todayAppointments > 0 && (
+        {/* Seção para Cliente */}
+        {userProfile?.userType === 'client' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
+                <span className="w-2 h-6 bg-primary rounded-full"></span>
+                Próximo Agendamento
+              </h3>
+            </div>
+
+            {clientAppointments && clientAppointments.length > 0 ? (
+              clientAppointments.map((appointment) => (
+                  <div key={appointment._id} className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 mb-4">
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                            {appointment.date} - {appointment.time}
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            appointment.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                            appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                            'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400'
+                          }`}>
+                            {appointment.status === 'confirmed' ? 'Confirmado' :
+                             appointment.status === 'pending' ? 'Pendente' :
+                             appointment.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                          </span>
+                        </div>
+                        <h2 className="text-xl font-bold text-text-main dark:text-white leading-tight">
+                          {appointment.owner?.businessName || 'Barbearia'}
+                        </h2>
+                        <p className="text-base text-text-muted dark:text-gray-400 mt-1">
+                          Profissional: {appointment.professional?.userName || 'N/A'}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-xs font-medium text-text-main dark:text-gray-200">
+                          <span className="material-symbols-outlined text-[14px]">cut</span>
+                          {appointment.service?.name || 'Serviço'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-bold">
+                          <span className="material-symbols-outlined text-[14px]">payments</span>
+                          R$ {appointment.totalValue.toFixed(2)}
+                        </span>
+                      </div>
+
+                      {appointment.status === 'confirmed' && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <span className="text-xs text-text-muted dark:text-gray-400">
+                            {appointment.owner?.location || appointment.owner?.address || 'Aguardando confirmação'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+            ) : (
+              <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-800 text-center">
+                <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-5xl mb-4 block">event_busy</span>
+                <h3 className="text-lg font-semibold text-text-main dark:text-white mb-2">Nenhum agendamento próximo</h3>
+                <p className="text-text-muted dark:text-gray-400">Agende seu próximo corte para garantir seu horário!</p>
+                <p className="text-xs text-gray-500 mt-2">Debug: {clientAppointments === undefined ? 'Carregando...' : `${clientAppointments?.length || 0} agendamentos encontrados`}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Main Grid Layout - só mostra para profissionais */}
+        {todayAppointments > 0 && userProfile?.userType !== 'client' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Next Up Section */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
-                  <span className="w-2 h-6 bg-primary rounded-full"></span>
-                  A Seguir
-                </h3>
-                <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
-                  Começa em 15 min
-                </span>
-              </div>
+            {/* Next Up Section - Para Profissional */}
+            {userProfile?.userType !== 'client' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
+                    <span className="w-2 h-6 bg-primary rounded-full"></span>
+                    Próximo Agendamento
+                  </h3>
+                </div>
 
-              <div className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-6 items-stretch">
+                {clientAppointments && clientAppointments.length > 0 ? (
+                  clientAppointments.map((appointment) => (
+                      <div key={appointment._id} className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 mb-4">
+                        <div className="flex flex-col gap-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                                {appointment.date} - {appointment.time}
+                              </span>
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                appointment.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                                appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                                'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400'
+                              }`}>
+                                {appointment.status === 'confirmed' ? 'Confirmado' :
+                                 appointment.status === 'pending' ? 'Pendente' :
+                                 appointment.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                              </span>
+                            </div>
+                            <h2 className="text-xl font-bold text-text-main dark:text-white leading-tight">
+                              {appointment.owner?.businessName || 'Barbearia'}
+                            </h2>
+                            <p className="text-base text-text-muted dark:text-gray-400 mt-1">
+                              Profissional: {appointment.professional?.userName || 'N/A'}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-xs font-medium text-text-main dark:text-gray-200">
+                              <span className="material-symbols-outlined text-[14px]">cut</span>
+                              {appointment.service?.name || 'Serviço'}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-bold">
+                              <span className="material-symbols-outlined text-[14px]">payments</span>
+                              R$ {appointment.totalValue.toFixed(2)}
+                            </span>
+                          </div>
+
+                          {appointment.status === 'confirmed' && (
+                            <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                              <span className="text-xs text-text-muted dark:text-gray-400">
+                                {appointment.owner?.location || appointment.owner?.address || 'Aguardando confirmação'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-800 text-center">
+                    <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-5xl mb-4 block">event_busy</span>
+                    <h3 className="text-lg font-semibold text-text-main dark:text-white mb-2">Nenhum agendamento próximo</h3>
+                    <p className="text-text-muted dark:text-gray-400">Agende seu próximo corte para garantir seu horário!</p>
+                    <p className="text-xs text-gray-500 mt-2">Debug: {clientAppointments === undefined ? 'Carregando...' : `${clientAppointments?.length || 0} agendamentos encontrados`}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Next Up Section - Para Profissional */}
+            {userProfile?.userType !== 'client' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
+                    <span className="w-2 h-6 bg-primary rounded-full"></span>
+                    A Seguir
+                  </h3>
+                  <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
+                    Começa em 15 min
+                  </span>
+                </div>
+
+                <div className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-6 items-stretch">
                 <div
                   className="w-full md:w-1/3 aspect-video md:aspect-auto rounded-xl bg-cover bg-center relative overflow-hidden"
                   style={{
@@ -199,7 +349,8 @@ function Dashboard() {
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
+            )}
 
             {/* Agenda Timeline */}
             <div>

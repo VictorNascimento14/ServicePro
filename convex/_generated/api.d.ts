@@ -10,6 +10,7 @@
 
 import type * as appointmentRequests from "../appointmentRequests.js";
 import type * as appointments from "../appointments.js";
+import type * as availability from "../availability.js";
 import type * as linkRequests from "../linkRequests.js";
 import type * as notificationTemplates from "../notificationTemplates.js";
 import type * as seed from "../seed.js";
@@ -27,6 +28,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   appointmentRequests: typeof appointmentRequests;
   appointments: typeof appointments;
+  availability: typeof availability;
   linkRequests: typeof linkRequests;
   notificationTemplates: typeof notificationTemplates;
   seed: typeof seed;

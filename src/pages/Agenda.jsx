@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/clerk-react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
@@ -15,6 +15,27 @@ function Agenda() {
   // Queries
   const userProfile = useQuery(api.users.getUserProfile, user ? { clerkId: user.id } : "skip")
   const ownerId = userProfile?.linkedToOwnerId || user?.id
+  
+  // Buscar disponibilidade do Convex
+  const savedAvailability = useQuery(
+    api.availability.getAvailability,
+    ownerId ? { ownerId } : "skip"
+  )
+
+  // Mutation para salvar disponibilidade
+  const saveAvailability = useMutation(api.availability.saveAvailability)
+
+  // Carregar disponibilidade salva
+  useEffect(() => {
+    if (savedAvailability && savedAvailability.length > 0) {
+      const availMap = {}
+      savedAvailability.forEach(item => {
+        const key = `${item.dayOfWeek}-${item.hour}`
+        availMap[key] = item.isAvailable
+      })
+      setAvailability(availMap)
+    }
+  }, [savedAvailability])
 
   // Dias da semana
   const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -51,15 +72,32 @@ function Agenda() {
     setShowHoursModal(true)
   }
 
-  const toggleHour = (hour) => {
-    const key = `${selectedDay.name}-${hour}`
+  const toggleHour = async (dayName, hour) => {
+    const key = `${dayName}-${hour}`
+    const newValue = !availability[key]
+    
+    // Atualizar estado local
     setAvailability(prev => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: newValue
     }))
+
+    // Salvar no Convex
+    if (ownerId) {
+      try {
+        await saveAvailability({
+          ownerId,
+          dayOfWeek: dayName,
+          hour,
+          isAvailable: newValue
+        })
+      } catch (error) {
+        console.error('Erro ao salvar disponibilidade:', error)
+      }
+    }
   }
 
-  const addCustomHour = () => {
+  const addCustomHour = async () => {
     if (!newHour || !selectedDay) return
     
     const dayKey = selectedDay.name
@@ -75,6 +113,20 @@ function Agenda() {
         ...prev,
         [`${dayKey}-${newHour}`]: true
       }))
+
+      // Salvar no Convex
+      if (ownerId) {
+        try {
+          await saveAvailability({
+            ownerId,
+            dayOfWeek: dayKey,
+            hour: newHour,
+            isAvailable: true
+          })
+        } catch (error) {
+          console.error('Erro ao salvar horário customizado:', error)
+        }
+      }
     }
     setNewHour('')
   }
@@ -172,9 +224,10 @@ function Agenda() {
                   </div>
                   <button
                     onClick={() => handleEditHours(day)}
-                    className="mt-2 text-xs text-primary hover:text-primary-dark transition-colors"
+                    className="mt-2 px-2 py-1 text-xs bg-primary/20 hover:bg-primary/30 text-primary rounded transition-colors flex items-center gap-1 mx-auto"
                   >
-                    Editar horários
+                    <span className="material-symbols-outlined text-xs">add_circle</span>
+                    Personalizar
                   </button>
                 </div>
               ))}
@@ -187,28 +240,32 @@ function Agenda() {
                   <div className="p-3 bg-gray-800/50 sticky left-0 flex items-center">
                     <span className="text-gray-300 font-medium">{hour}</span>
                   </div>
-                  {currentWeek.map((day, dayIdx) => (
-                    <div
-                      key={dayIdx}
-                      className={`p-3 border-l border-gray-700 cursor-pointer transition-colors ${
-                        isAvailable(day.name, hour)
-                          ? 'bg-green-900/20 hover:bg-green-900/40'
-                          : 'bg-red-900/20 hover:bg-red-900/40'
-                      }`}
-                      onClick={() => {
-                        const key = `${day.name}-${hour}`
-                        setAvailability(prev => ({ ...prev, [key]: !prev[key] }))
-                      }}
-                    >
-                      <div className="text-center">
-                        {isAvailable(day.name, hour) ? (
-                          <span className="material-symbols-outlined text-green-400 text-sm">check_circle</span>
-                        ) : (
-                          <span className="material-symbols-outlined text-red-400 text-sm">cancel</span>
-                        )}
+                  {currentWeek.map((day, dayIdx) => {
+                    const available = isAvailable(day.name, hour)
+                    return (
+                      <div
+                        key={dayIdx}
+                        className={`p-3 border-l border-gray-700 cursor-pointer transition-all select-none ${
+                          available
+                            ? 'bg-green-900/20 hover:bg-green-900/40 active:bg-green-900/60'
+                            : 'bg-red-900/20 hover:bg-red-900/40 active:bg-red-900/60'
+                        }`}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          toggleHour(day.name, hour)
+                        }}
+                      >
+                        <div className="text-center">
+                          {available ? (
+                            <span className="material-symbols-outlined text-green-400 text-sm">check_circle</span>
+                          ) : (
+                            <span className="material-symbols-outlined text-red-400 text-sm">cancel</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ))}
             </div>
@@ -283,8 +340,8 @@ function Agenda() {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => toggleHour(hour)}
-                          className="p-1"
+                          onClick={() => toggleHour(selectedDay.name, hour)}
+                          className="p-1 hover:bg-gray-700/50 rounded transition-colors"
                         >
                           {available ? (
                             <span className="material-symbols-outlined text-green-400">check_circle</span>

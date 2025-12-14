@@ -6,7 +6,7 @@ import { api } from '../../convex/_generated/api'
 import { useState } from 'react'
 
 function Sidebar({ currentPath }) {
-  const { isDark, toggleTheme } = useTheme()
+  const { isDark } = useTheme()
   const { user } = useUser()
   const { signOut } = useClerk()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -99,23 +99,6 @@ function Sidebar({ currentPath }) {
           <span className="material-symbols-outlined">settings</span>
           <span className="text-sm font-medium">Configurações</span>
         </Link>
-
-        <div className="mt-4 flex items-center justify-between px-3">
-          <span className="text-sm font-medium text-text-muted dark:text-gray-400">Tema</span>
-          <button
-            onClick={toggleTheme}
-            className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-200 transition-transform duration-500 ${
-                isDark ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-            <span className="absolute left-1 text-xs text-gray-500 dark:text-gray-400 transition-colors duration-500">
-              {isDark ? '🌙' : '☀️'}
-            </span>
-          </button>
-        </div>
 
         <div className="mt-4 flex items-center gap-3 px-3 relative">
           <button

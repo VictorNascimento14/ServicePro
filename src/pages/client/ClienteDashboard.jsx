@@ -9,8 +9,27 @@ function ClienteDashboard() {
   const { signOut } = useClerk()
   const navigate = useNavigate()
   const resetProfile = useMutation(api.users.resetUserProfile)
+  const cancelAppointment = useMutation(api.appointments.cancelClientAppointment)
   const userProfile = useQuery(api.users.getUserProfile, user ? { clerkId: user.id } : "skip")
   const userName = userProfile?.userName || user?.firstName || 'Cliente'
+  
+  // Buscar agendamentos do cliente
+  const clientAppointments = useQuery(
+    api.appointments.getByClientClerkId, 
+    user ? { clientClerkId: user.id } : "skip"
+  )
+  
+  const handleCancelAppointment = async (appointmentId, date, time) => {
+    if (confirm(`Tem certeza que deseja cancelar o agendamento do dia ${date} às ${time}?`)) {
+      try {
+        await cancelAppointment({ appointmentId })
+        alert('Agendamento cancelado com sucesso!')
+      } catch (error) {
+        console.error('Erro ao cancelar:', error)
+        alert('Erro ao cancelar agendamento. Tente novamente.')
+      }
+    }
+  }
 
   const resetButton = (
     <button
@@ -98,18 +117,87 @@ function ClienteDashboard() {
         </div>
       </div>
 
-      {/* Próximo agendamento */}
+      {/* Próximos agendamentos */}
       <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-800">
         <h2 className="text-lg font-semibold text-text-main dark:text-white mb-4">
-          Próximo Agendamento
+          Meus Agendamentos
         </h2>
-        <div className="text-center py-8">
-          <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-5xl mb-4 block">event_busy</span>
-          <p className="text-text-muted dark:text-gray-400">Nenhum agendamento próximo</p>
-          <p className="text-sm text-text-muted dark:text-gray-500 mt-2">
-            Agende seu próximo corte para garantir seu horário!
-          </p>
-        </div>
+        
+        {!clientAppointments ? (
+          <div className="text-center py-8">
+            <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-5xl mb-4 block animate-spin">sync</span>
+            <p className="text-text-muted dark:text-gray-400">Carregando...</p>
+          </div>
+        ) : clientAppointments.length === 0 ? (
+          <div className="text-center py-8">
+            <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-5xl mb-4 block">event_busy</span>
+            <p className="text-text-muted dark:text-gray-400">Nenhum agendamento encontrado</p>
+            <p className="text-sm text-text-muted dark:text-gray-500 mt-2">
+              Agende seu próximo corte para garantir seu horário!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {clientAppointments.map((appointment) => (
+              <div 
+                key={appointment._id}
+                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-2xl">event</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-text-main dark:text-white">
+                      {appointment.serviceName || 'Serviço'}
+                    </h3>
+                    <div className="flex items-center gap-4 mt-1 text-sm text-text-muted dark:text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                        {appointment.date}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px]">schedule</span>
+                        {appointment.time}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px]">person</span>
+                        {appointment.professionalName || 'Profissional'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      appointment.status === 'confirmed' 
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                        : appointment.status === 'cancelled'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-400'
+                    }`}>
+                      {appointment.status === 'confirmed' ? 'Confirmado' : 
+                       appointment.status === 'cancelled' ? 'Cancelado' : 
+                       appointment.status === 'completed' ? 'Concluído' : appointment.status}
+                    </div>
+                    <p className="text-sm font-semibold text-primary mt-2">
+                      R$ {(appointment.totalValue || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  {appointment.status === 'confirmed' && (
+                    <button
+                      onClick={() => handleCancelAppointment(appointment._id, appointment.date, appointment.time)}
+                      className="flex items-center gap-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

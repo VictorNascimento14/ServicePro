@@ -66,33 +66,29 @@ export default defineSchema({
   // 4. Tabela de Agendamentos
   appointments: defineTable({
     ownerId: v.string(),
-    startDatetime: v.number(), // timestamp
-    endDatetime: v.number(), // timestamp
-    customerId: v.id("customers"),
-    professionalId: v.id("usersProfessionals"),
+    professionalClerkId: v.string(), // clerkId do profissional
+    clientClerkId: v.string(), // clerkId do cliente
+    clientName: v.string(),
+    clientEmail: v.optional(v.string()),
+    clientPhone: v.optional(v.string()),
     serviceId: v.id("services"),
+    date: v.string(), // formato DD/MM/YYYY
+    time: v.string(), // formato HH:MM
+    dayOfWeek: v.string(), // 'Domingo', 'Segunda', etc.
+    totalValue: v.number(),
     status: v.union(
       v.literal("confirmed"),
       v.literal("pending"),
       v.literal("cancelled"),
       v.literal("completed")
     ),
-    paymentMethod: v.optional(
-      v.union(v.literal("online"), v.literal("cash"), v.literal("card"))
-    ),
-    totalValue: v.number(), // >= 0
-    notes: v.optional(v.string()),
-    checkInDone: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
-    deletedAt: v.optional(v.number()),
   })
-    .index("ownerId_customerId", ["ownerId", "customerId"])
-    .index("ownerId_professionalId", ["ownerId", "professionalId"])
-    .index("ownerId_serviceId", ["ownerId", "serviceId"])
-    .index("ownerId_status", ["ownerId", "status"])
-    .index("ownerId_startDatetime", ["ownerId", "startDatetime"])
-    .index("ownerId_endDatetime", ["ownerId", "endDatetime"]),
+    .index("ownerId", ["ownerId"])
+    .index("professionalClerkId", ["professionalClerkId"])
+    .index("clientClerkId", ["clientClerkId"])
+    .index("ownerId_status", ["ownerId", "status"]),
 
   // 5. Tabela de Bloqueios de Horário
   timeBlocks: defineTable({
@@ -226,4 +222,16 @@ export default defineSchema({
   })
     .index("ownerId_status", ["ownerId", "status"])
     .index("employeeId", ["employeeId"]),
+
+  // 13. Tabela de Disponibilidade de Horários
+  availability: defineTable({
+    ownerId: v.string(),
+    dayOfWeek: v.string(), // 'Domingo', 'Segunda', etc.
+    hour: v.string(), // '08:00', '09:00', etc.
+    isAvailable: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("ownerId_day", ["ownerId", "dayOfWeek"])
+    .index("ownerId", ["ownerId"]),
 });

@@ -21,6 +21,9 @@ function Servicos() {
   const userProfile = useQuery(api.users.getUserProfile, user ? { clerkId: user.id } : "skip")
   const ownerId = userProfile?.linkedToOwnerId || user?.id
   const services = useQuery(api.services.getAll, ownerId ? { ownerId } : "skip")
+  
+  // Verificar se é dono (pode editar) ou funcionário (apenas visualizar)
+  const isOwner = userProfile?.isOwner === true
 
   // Mutations
   const createService = useMutation(api.services.create)
@@ -93,41 +96,40 @@ function Servicos() {
             </p>
           </div>
 
-          {/* Cards de Ações Principais */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div 
-              onClick={() => setShowAddModal(true)}
-              className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
-            >
-              <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl text-primary">add_circle</span>
+          {/* Cards de Ações Principais - Apenas para Donos */}
+          {isOwner && (
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div 
+                onClick={() => setShowAddModal(true)}
+                className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
+              >
+                <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl text-primary">add_circle</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2 text-center">
+                  Adicionar Serviço
+                </h3>
+                <p className="text-gray-300 text-center">
+                  Adicione um novo serviço ao seu catálogo
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2 text-center">
-                Adicionar Serviço
-              </h3>
-              <p className="text-gray-300 text-center">
-                Adicione um novo serviço ao seu catálogo
-              </p>
-            </div>
 
-            <div 
-              onClick={() => {
-                console.log('Clicou em Ajustar Preços')
-                setShowPriceModal(true)
-              }}
-              className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
-            >
-              <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl text-primary">attach_money</span>
+              <div 
+                onClick={() => setShowPriceModal(true)}
+                className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
+              >
+                <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl text-primary">attach_money</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2 text-center">
+                  Ajustar Preços
+                </h3>
+                <p className="text-gray-300 text-center">
+                  Edite os preços dos serviços cadastrados
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2 text-center">
-                Ajustar Preços
-              </h3>
-              <p className="text-gray-300 text-center">
-                Edite os preços dos serviços cadastrados
-              </p>
             </div>
-          </div>
+          )}
 
           {/* Lista de Serviços */}
           <div className="bg-surface-dark p-8 rounded-2xl shadow-xl border border-gray-700 mb-8">
@@ -135,12 +137,14 @@ function Servicos() {
               <h2 className="text-2xl font-bold text-white">
                 Catálogo de Serviços
               </h2>
-              <button 
-                onClick={() => setShowAddModal(true)}
-                className="bg-primary hover:bg-primary-dark text-primary-content px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:scale-105"
-              >
-                + Novo Serviço
-              </button>
+              {isOwner && (
+                <button 
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-primary hover:bg-primary-dark text-primary-content px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:scale-105"
+                >
+                  + Novo Serviço
+                </button>
+              )}
             </div>
 
             {!services || services.length === 0 ? (
@@ -152,14 +156,19 @@ function Servicos() {
                   Nenhum serviço cadastrado
                 </h3>
                 <p className="text-gray-300 mb-6">
-                  Comece adicionando seu primeiro serviço para organizar seu negócio
+                  {isOwner 
+                    ? 'Comece adicionando seu primeiro serviço para organizar seu negócio'
+                    : 'Ainda não há serviços cadastrados neste estabelecimento'
+                  }
                 </p>
-                <button 
-                  onClick={() => setShowAddModal(true)}
+                {isOwner && (
+                  <button 
+                    onClick={() => setShowAddModal(true)}
                   className="bg-primary hover:bg-primary-dark text-primary-content px-8 py-3 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:scale-105"
                 >
                   Adicionar Primeiro Serviço
                 </button>
+                )}
               </div>
             ) : (
               <div className="grid gap-4">
@@ -188,22 +197,24 @@ function Servicos() {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(service)}
-                          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                          title="Editar"
-                        >
-                          <span className="material-symbols-outlined text-primary">edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(service._id)}
-                          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                          title="Excluir"
-                        >
-                          <span className="material-symbols-outlined text-red-400">delete</span>
-                        </button>
-                      </div>
+                      {isOwner && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(service)}
+                            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <span className="material-symbols-outlined text-primary">edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(service._id)}
+                            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                            title="Excluir"
+                          >
+                            <span className="material-symbols-outlined text-red-400">delete</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -295,3 +295,135 @@ export const deleteAppointment = mutation({
     return args.id;
   },
 });
+
+// Criar agendamento de cliente
+export const createClientAppointment = mutation({
+  args: {
+    ownerId: v.string(),
+    professionalClerkId: v.string(),
+    clientClerkId: v.string(),
+    clientName: v.string(),
+    clientEmail: v.optional(v.string()),
+    clientPhone: v.optional(v.string()),
+    serviceId: v.id("services"),
+    date: v.string(),
+    time: v.string(),
+    dayOfWeek: v.string(),
+    totalValue: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Criar agendamento
+    const appointmentId = await ctx.db.insert("appointments", {
+      ownerId: args.ownerId,
+      professionalClerkId: args.professionalClerkId,
+      clientClerkId: args.clientClerkId,
+      clientName: args.clientName,
+      clientEmail: args.clientEmail,
+      clientPhone: args.clientPhone,
+      serviceId: args.serviceId,
+      date: args.date,
+      time: args.time,
+      dayOfWeek: args.dayOfWeek,
+      totalValue: args.totalValue,
+      status: "confirmed",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return appointmentId;
+  },
+});
+
+// Buscar agendamentos por profissional (clerkId)
+export const getByProfessionalClerkId = query({
+  args: {
+    professionalClerkId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const appointments = await ctx.db
+      .query("appointments")
+      .withIndex("professionalClerkId", (q) =>
+        q.eq("professionalClerkId", args.professionalClerkId)
+      )
+      .filter((q) => q.neq(q.field("status"), "cancelled"))
+      .collect();
+
+    // Buscar informações dos serviços
+    const appointmentsWithService = await Promise.all(
+      appointments.map(async (appointment) => {
+        const service = await ctx.db.get(appointment.serviceId);
+        return {
+          ...appointment,
+          service,
+        };
+      })
+    );
+
+    return appointmentsWithService;
+  },
+});
+
+// Buscar agendamentos por cliente (clerkId)
+export const getByClientClerkId = query({
+  args: {
+    clientClerkId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const appointments = await ctx.db
+      .query("appointments")
+      .withIndex("clientClerkId", (q) =>
+        q.eq("clientClerkId", args.clientClerkId)
+      )
+      .collect();
+
+    // Buscar informações dos serviços e profissionais
+    const appointmentsWithDetails = await Promise.all(
+      appointments.map(async (appointment) => {
+        const service = await ctx.db.get(appointment.serviceId);
+        const professional = await ctx.db
+          .query("userProfiles")
+          .withIndex("clerkId", (q) => q.eq("clerkId", appointment.professionalClerkId))
+          .first();
+        const owner = await ctx.db
+          .query("userProfiles")
+          .withIndex("clerkId", (q) => q.eq("clerkId", appointment.ownerId))
+          .first();
+        
+        return {
+          ...appointment,
+          service,
+          professional,
+          owner,
+        };
+      })
+    );
+
+    return appointmentsWithDetails;
+  },
+});
+
+// Cancelar agendamento e liberar horário
+export const cancelClientAppointment = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+  },
+  handler: async (ctx, args) => {
+    const appointment = await ctx.db.get(args.appointmentId);
+    
+    if (!appointment) {
+      throw new Error("Agendamento não encontrado");
+    }
+
+    const now = Date.now();
+
+    // Atualizar status para cancelado
+    await ctx.db.patch(args.appointmentId, {
+      status: "cancelled",
+      updatedAt: now,
+    });
+
+    return { success: true };
+  },
+});
