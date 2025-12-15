@@ -17,6 +17,8 @@ function OnboardingQuestionnaire() {
     services: [],
     experience: '',
     location: '',
+    neighborhood: '',
+    address: '',
     phone: '',
     preferences: [],
     availability: ''
@@ -79,11 +81,27 @@ function OnboardingQuestionnaire() {
     },
     {
       id: 'location',
-      title: 'Onde você está localizado?',
+      title: 'Em qual cidade você está?',
       subtitle: 'Cidade e estado para conexões locais',
       type: 'text',
       placeholder: 'Ex: São Paulo, SP',
       condition: (answers) => answers.userType === 'business' || answers.userType === 'barber'
+    },
+    {
+      id: 'neighborhood',
+      title: 'Qual o bairro?',
+      subtitle: 'Ajuda os clientes a encontrar você mais facilmente',
+      type: 'text',
+      placeholder: 'Ex: Centro, Vila Mariana, Copacabana...',
+      condition: (answers) => answers.userType === 'business'
+    },
+    {
+      id: 'address',
+      title: 'Qual o endereço completo?',
+      subtitle: 'Rua, número e complemento do seu estabelecimento',
+      type: 'text',
+      placeholder: 'Ex: Rua das Flores, 123 - Sala 5',
+      condition: (answers) => answers.userType === 'business'
     },
     {
       id: 'phone',
@@ -171,6 +189,12 @@ function OnboardingQuestionnaire() {
       }
       if (answers.location && answers.location.trim()) {
         profileData.location = answers.location.trim()
+      }
+      if (answers.neighborhood && answers.neighborhood.trim()) {
+        profileData.neighborhood = answers.neighborhood.trim()
+      }
+      if (answers.address && answers.address.trim()) {
+        profileData.address = answers.address.trim()
       }
       if (answers.phone && answers.phone.trim()) {
         profileData.phone = answers.phone.trim()

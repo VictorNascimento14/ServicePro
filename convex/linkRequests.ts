@@ -94,7 +94,7 @@ export const acceptLinkRequest = mutation({
     // Vincular funcionário ao dono
     const employeeProfile = await ctx.db
       .query("userProfiles")
-      .withIndex("clerkId", (q) => q.eq("clerkId", request.employeeId))
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", request.employeeId))
       .first();
 
     if (employeeProfile) {

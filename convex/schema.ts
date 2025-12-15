@@ -195,6 +195,7 @@ export default defineSchema({
     services: v.array(v.string()), // Array of service types
     experience: v.optional(v.string()), // 'beginner', 'intermediate', 'experienced', 'expert'
     location: v.optional(v.string()), // Cidade
+    neighborhood: v.optional(v.string()), // Bairro
     address: v.optional(v.string()), // Endereço completo
     phone: v.optional(v.string()),
     preferences: v.array(v.string()), // Array of style preferences
@@ -202,10 +203,11 @@ export default defineSchema({
     onboardingCompleted: v.boolean(),
     linkedToOwnerId: v.optional(v.string()), // Para funcionários: ID do dono da barbearia
     isOwner: v.optional(v.boolean()), // true para donos de estabelecimento
+    autoApproveClients: v.optional(v.boolean()), // Se true, agendamentos de clientes são aprovados automaticamente
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("clerkId", ["clerkId"])
+    .index("by_clerk_id", ["clerkId"])
     .index("linkedToOwnerId", ["linkedToOwnerId"]),
 
   // 12. Tabela de Solicitações de Vínculo (Funcionários → Barbearias)
@@ -234,4 +236,22 @@ export default defineSchema({
   })
     .index("ownerId_day", ["ownerId", "dayOfWeek"])
     .index("ownerId", ["ownerId"]),
+
+  // 14. Tabela de Notificações
+  notifications: defineTable({
+    recipientClerkId: v.string(), // quem vai receber a notificação
+    type: v.union(
+      v.literal("new_appointment"),
+      v.literal("cancelled_appointment"),
+      v.literal("appointment_reminder")
+    ),
+    title: v.string(),
+    message: v.string(),
+    appointmentId: v.optional(v.id("appointments")),
+    data: v.optional(v.any()), // dados adicionais em JSON
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("recipientClerkId", ["recipientClerkId"])
+    .index("recipientClerkId_isRead", ["recipientClerkId", "isRead"]),
 });

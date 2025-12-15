@@ -277,6 +277,61 @@ export const getByDate = query({
   },
 });
 
+// Buscar agendamentos por data para qualquer usuário (owner ou professional)
+export const getByDateForUser = query({
+  args: {
+    clerkId: v.string(),
+    date: v.string(), // Formato brasileiro DD/MM/YYYY ou ISO YYYY-MM-DD
+  },
+  handler: async (ctx, args) => {
+    // Converter data ISO para formato brasileiro se necessário
+    let searchDate = args.date;
+    if (args.date.includes('-')) {
+      // Converter de YYYY-MM-DD para DD/MM/YYYY
+      const [year, month, day] = args.date.split('-');
+      searchDate = `${day}/${month}/${year}`;
+    }
+
+    // Buscar todos os agendamentos do dia que pertencem ao usuário como owner OU professional
+    const appointments = await ctx.db
+      .query("appointments")
+      .filter((q) =>
+        q.and(
+          q.or(
+            q.eq(q.field("ownerId"), args.clerkId),
+            q.eq(q.field("professionalClerkId"), args.clerkId)
+          ),
+          q.eq(q.field("date"), searchDate)
+        )
+      )
+      .collect();
+
+    // Popular dados do cliente e serviço
+    const appointmentsWithDetails = await Promise.all(
+      appointments.map(async (appointment) => {
+        const client = appointment.clientClerkId
+          ? await ctx.db
+              .query("userProfiles")
+              .withIndex("by_clerk_id", (q) => q.eq("clerkId", appointment.clientClerkId))
+              .first()
+          : null;
+
+        const service = appointment.serviceId
+          ? await ctx.db.get(appointment.serviceId)
+          : null;
+
+        return {
+          ...appointment,
+          client,
+          service,
+        };
+      })
+    );
+
+    return appointmentsWithDetails;
+  },
+});
+
 // Deletar agendamento (soft delete)
 export const deleteAppointment = mutation({
   args: { id: v.id("appointments"), ownerId: v.string() },
@@ -314,6 +369,9 @@ export const createClientAppointment = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
+    // Buscar informações do serviço
+    const service = await ctx.db.get(args.serviceId);
+
     // Criar agendamento
     const appointmentId = await ctx.db.insert("appointments", {
       ownerId: args.ownerId,
@@ -330,6 +388,25 @@ export const createClientAppointment = mutation({
       status: "confirmed",
       createdAt: now,
       updatedAt: now,
+    });
+
+    // Criar notificação para o profissional
+    await ctx.db.insert("notifications", {
+      recipientClerkId: args.professionalClerkId,
+      type: "new_appointment",
+      title: "Novo Agendamento",
+      message: `${args.clientName} marcou um atendimento com você para ${args.dayOfWeek}, ${args.date} às ${args.time}. Serviço: ${service?.name || 'N/A'}`,
+      appointmentId: appointmentId,
+      data: {
+        clientName: args.clientName,
+        serviceName: service?.name,
+        date: args.date,
+        time: args.time,
+        dayOfWeek: args.dayOfWeek,
+        totalValue: args.totalValue,
+      },
+      isRead: false,
+      createdAt: now,
     });
 
     return appointmentId;
@@ -350,18 +427,27 @@ export const getByProfessionalClerkId = query({
       .filter((q) => q.neq(q.field("status"), "cancelled"))
       .collect();
 
-    // Buscar informações dos serviços
-    const appointmentsWithService = await Promise.all(
+    // Buscar informações dos serviços e clientes
+    const appointmentsWithDetails = await Promise.all(
       appointments.map(async (appointment) => {
         const service = await ctx.db.get(appointment.serviceId);
+        
+        const client = appointment.clientClerkId
+          ? await ctx.db
+              .query("userProfiles")
+              .withIndex("by_clerk_id", (q) => q.eq("clerkId", appointment.clientClerkId))
+              .first()
+          : null;
+
         return {
           ...appointment,
           service,
+          client,
         };
       })
     );
 
-    return appointmentsWithService;
+    return appointmentsWithDetails;
   },
 });
 
@@ -384,11 +470,11 @@ export const getByClientClerkId = query({
         const service = await ctx.db.get(appointment.serviceId);
         const professional = await ctx.db
           .query("userProfiles")
-          .withIndex("clerkId", (q) => q.eq("clerkId", appointment.professionalClerkId))
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", appointment.professionalClerkId))
           .first();
         const owner = await ctx.db
           .query("userProfiles")
-          .withIndex("clerkId", (q) => q.eq("clerkId", appointment.ownerId))
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", appointment.ownerId))
           .first();
         
         return {
@@ -418,12 +504,65 @@ export const cancelClientAppointment = mutation({
 
     const now = Date.now();
 
+    // Buscar informações do serviço
+    const service = await ctx.db.get(appointment.serviceId);
+
     // Atualizar status para cancelado
     await ctx.db.patch(args.appointmentId, {
       status: "cancelled",
       updatedAt: now,
     });
 
+    // Criar notificação para o profissional
+    await ctx.db.insert("notifications", {
+      recipientClerkId: appointment.professionalClerkId,
+      type: "cancelled_appointment",
+      title: "Agendamento Cancelado",
+      message: `${appointment.clientName} cancelou o atendimento de ${appointment.dayOfWeek}, ${appointment.date} às ${appointment.time}. Serviço: ${service?.name || 'N/A'}`,
+      appointmentId: args.appointmentId,
+      data: {
+        clientName: appointment.clientName,
+        serviceName: service?.name,
+        date: appointment.date,
+        time: appointment.time,
+        dayOfWeek: appointment.dayOfWeek,
+      },
+      isRead: false,
+      createdAt: now,
+    });
+
     return { success: true };
+  },
+});
+
+// Limpar (deletar permanentemente) agendamentos concluídos ou cancelados
+export const clearCompletedAppointments = mutation({
+  args: {
+    clientClerkId: v.string(),
+    appointmentIds: v.array(v.id("appointments")),
+  },
+  handler: async (ctx, args) => {
+    // Verificar e deletar cada agendamento
+    for (const appointmentId of args.appointmentIds) {
+      const appointment = await ctx.db.get(appointmentId);
+      
+      if (!appointment) {
+        continue; // Pular se não encontrado
+      }
+
+      // Verificar se o agendamento pertence ao cliente
+      if (appointment.clientClerkId !== args.clientClerkId) {
+        throw new Error("Você não tem permissão para deletar este agendamento");
+      }
+
+      // Só permitir deletar se estiver concluído ou cancelado
+      if (appointment.status === "completed" || appointment.status === "cancelled") {
+        await ctx.db.delete(appointmentId);
+      } else {
+        throw new Error("Apenas agendamentos concluídos ou cancelados podem ser removidos");
+      }
+    }
+
+    return { success: true, deleted: args.appointmentIds.length };
   },
 });

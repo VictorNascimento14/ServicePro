@@ -99,6 +99,28 @@ function Sidebar({ currentPath }) {
           <span className="material-symbols-outlined">settings</span>
           <span className="text-sm font-medium">Configurações</span>
         </Link>
+        
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={() => {
+            const html = document.documentElement
+            if (html.classList.contains('dark')) {
+              html.classList.remove('dark')
+              localStorage.setItem('theme', 'light')
+            } else {
+              html.classList.add('dark')
+              localStorage.setItem('theme', 'dark')
+            }
+          }}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-muted dark:text-gray-400 hover:text-text-main dark:hover:text-white transition-colors w-full mt-2"
+        >
+          <span className="material-symbols-outlined">
+            {document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode'}
+          </span>
+          <span className="text-sm font-medium">
+            {document.documentElement.classList.contains('dark') ? 'Modo Claro' : 'Modo Escuro'}
+          </span>
+        </button>
 
         <div className="mt-4 flex items-center gap-3 px-3 relative">
           <button

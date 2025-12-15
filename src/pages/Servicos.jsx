@@ -83,15 +83,15 @@ function Servicos() {
   }
 
   return (
-    <div className="min-h-screen bg-green-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-background-dark">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-3xl font-bold text-text-main dark:text-white mb-2">
               Gestão de Serviços
             </h1>
-            <p className="text-gray-300">
+            <p className="text-gray-600 dark:text-gray-300">
               Gerencie seus serviços, preços e categorias
             </p>
           </div>
@@ -101,30 +101,30 @@ function Servicos() {
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div 
                 onClick={() => setShowAddModal(true)}
-                className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
+                className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
               >
                 <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
                   <span className="material-symbols-outlined text-2xl text-primary">add_circle</span>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2 text-center">
+                <h3 className="text-xl font-semibold text-text-main dark:text-white mb-2 text-center">
                   Adicionar Serviço
                 </h3>
-                <p className="text-gray-300 text-center">
+                <p className="text-gray-600 dark:text-gray-300 text-center">
                   Adicione um novo serviço ao seu catálogo
                 </p>
               </div>
 
               <div 
                 onClick={() => setShowPriceModal(true)}
-                className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
+                className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:border-primary/50 transition-colors cursor-pointer"
               >
                 <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
                   <span className="material-symbols-outlined text-2xl text-primary">attach_money</span>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2 text-center">
+                <h3 className="text-xl font-semibold text-text-main dark:text-white mb-2 text-center">
                   Ajustar Preços
                 </h3>
-                <p className="text-gray-300 text-center">
+                <p className="text-gray-600 dark:text-gray-300 text-center">
                   Edite os preços dos serviços cadastrados
                 </p>
               </div>
@@ -132,9 +132,9 @@ function Servicos() {
           )}
 
           {/* Lista de Serviços */}
-          <div className="bg-surface-dark p-8 rounded-2xl shadow-xl border border-gray-700 mb-8">
+          <div className="bg-white dark:bg-surface-dark p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 mb-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-2xl font-bold text-text-main dark:text-white">
                 Catálogo de Serviços
               </h2>
               {isOwner && (
@@ -152,10 +152,10 @@ function Servicos() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="material-symbols-outlined text-4xl text-primary">inventory</span>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-text-main dark:text-white mb-2">
                   Nenhum serviço cadastrado
                 </h3>
-                <p className="text-gray-300 mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
                   {isOwner 
                     ? 'Comece adicionando seu primeiro serviço para organizar seu negócio'
                     : 'Ainda não há serviços cadastrados neste estabelecimento'
@@ -173,15 +173,15 @@ function Servicos() {
             ) : (
               <div className="grid gap-4">
                 {services.map((service) => (
-                  <div key={service._id} className="bg-gray-800/50 p-6 rounded-xl border border-gray-700 hover:border-primary/30 transition-colors">
+                  <div key={service._id} className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary/30 transition-colors">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-2">{service.name}</h3>
+                        <h3 className="text-xl font-bold text-text-main dark:text-white mb-2">{service.name}</h3>
                         {service.description && (
-                          <p className="text-gray-300 mb-3">{service.description}</p>
+                          <p className="text-gray-600 dark:text-gray-300 mb-3">{service.description}</p>
                         )}
                         <div className="flex gap-6 text-sm">
-                          <div className="flex items-center gap-2 text-gray-400">
+                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                             <span className="material-symbols-outlined text-base">schedule</span>
                             <span>{service.durationMinutes} min</span>
                           </div>
@@ -190,7 +190,7 @@ function Servicos() {
                             <span>R$ {service.price.toFixed(2)}</span>
                           </div>
                           {service.category && (
-                            <div className="flex items-center gap-2 text-gray-400">
+                            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                               <span className="material-symbols-outlined text-base">category</span>
                               <span>{service.category}</span>
                             </div>
@@ -201,14 +201,14 @@ function Servicos() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleEdit(service)}
-                            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                             title="Editar"
                           >
                             <span className="material-symbols-outlined text-primary">edit</span>
                           </button>
                           <button
                             onClick={() => handleDelete(service._id)}
-                            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                             title="Excluir"
                           >
                             <span className="material-symbols-outlined text-red-400">delete</span>
@@ -224,15 +224,15 @@ function Servicos() {
 
           {/* Estatísticas */}
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 text-center">
+            <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 text-center">
               <div className="text-3xl font-bold text-primary mb-2">{services?.length || 0}</div>
-              <div className="text-gray-300">Serviços Ativos</div>
+              <div className="text-gray-600 dark:text-gray-300">Serviços Ativos</div>
             </div>
-            <div className="bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-700 text-center">
+            <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 text-center">
               <div className="text-3xl font-bold text-primary mb-2">
                 R$ {services?.reduce((acc, s) => acc + s.price, 0).toFixed(2) || '0,00'}
               </div>
-              <div className="text-gray-300">Valor Total dos Serviços</div>
+              <div className="text-gray-600 dark:text-gray-300">Valor Total dos Serviços</div>
             </div>
           </div>
         </div>

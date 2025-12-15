@@ -13,6 +13,7 @@ import type * as appointments from "../appointments.js";
 import type * as availability from "../availability.js";
 import type * as linkRequests from "../linkRequests.js";
 import type * as notificationTemplates from "../notificationTemplates.js";
+import type * as notifications from "../notifications.js";
 import type * as seed from "../seed.js";
 import type * as serviceHistory from "../serviceHistory.js";
 import type * as services from "../services.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   availability: typeof availability;
   linkRequests: typeof linkRequests;
   notificationTemplates: typeof notificationTemplates;
+  notifications: typeof notifications;
   seed: typeof seed;
   serviceHistory: typeof serviceHistory;
   services: typeof services;

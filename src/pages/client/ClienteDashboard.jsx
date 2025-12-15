@@ -149,7 +149,7 @@ function ClienteDashboard() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-text-main dark:text-white">
-                      {appointment.serviceName || 'Serviço'}
+                      {appointment.service?.name || 'Serviço'}
                     </h3>
                     <div className="flex items-center gap-4 mt-1 text-sm text-text-muted dark:text-gray-400">
                       <span className="flex items-center gap-1">
@@ -162,7 +162,7 @@ function ClienteDashboard() {
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-[16px]">person</span>
-                        {appointment.professionalName || 'Profissional'}
+                        {appointment.professional?.userName || 'Profissional'}
                       </span>
                     </div>
                   </div>

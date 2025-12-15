@@ -272,7 +272,7 @@ export const getUserProfile = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("userProfiles")
-      .withIndex("clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .first();
   },
 });
@@ -283,7 +283,7 @@ export const getLinkedOwnerProfile = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("userProfiles")
-      .withIndex("clerkId", (q) => q.eq("clerkId", args.linkedToOwnerId))
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.linkedToOwnerId))
       .first();
   },
 });
@@ -293,30 +293,35 @@ export const updateUserProfile = mutation({
   args: {
     clerkId: v.string(),
     userName: v.optional(v.string()),
-    userType: v.string(),
+    userType: v.optional(v.string()),
     businessName: v.optional(v.string()),
-    services: v.array(v.string()),
+    services: v.optional(v.array(v.string())),
     experience: v.optional(v.string()),
     location: v.optional(v.string()),
     address: v.optional(v.string()),
     phone: v.optional(v.string()),
-    preferences: v.array(v.string()),
+    preferences: v.optional(v.array(v.string())),
     availability: v.optional(v.string()),
-    onboardingCompleted: v.boolean(),
+    onboardingCompleted: v.optional(v.boolean()),
     isOwner: v.optional(v.boolean()),
+    autoApproveClients: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("userProfiles")
-      .withIndex("clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
     const now = Date.now();
 
     if (existing) {
-      // Atualizar perfil existente
+      // Atualizar perfil existente - apenas os campos fornecidos
+      const updateData = Object.fromEntries(
+        Object.entries(args).filter(([key, value]) => key !== 'clerkId' && value !== undefined)
+      );
+      
       await ctx.db.patch(existing._id, {
-        ...args,
+        ...updateData,
         updatedAt: now,
       });
       return existing._id;
@@ -337,7 +342,7 @@ export const resetUserProfile = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("userProfiles")
-      .withIndex("clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
     if (existing) {
