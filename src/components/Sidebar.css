@@ -1,0 +1,109 @@
+/* Estilos base da sidebar */
+
+.sidebar {
+  background-color: #0f172a;
+  min-height: 100vh;
+  padding: 1.5rem 0;
+  transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+  width: 70px;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar.expanded {
+  width: 250px;
+}
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-item {
+  position: relative;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.sidebar-item:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-item.active {
+  background-color: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+  border-top-left-radius: 40px;
+  border-bottom-left-radius: 40px;
+}
+
+.sidebar-item.active::before,
+.sidebar-item.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+}
+
+
+.sidebar-item.active::before {
+  top: -30px;
+  border-bottom-right-radius: 30px;
+  box-shadow: 15px 15px 0 15px #ffffff;
+}
+
+.sidebar-item.active::after {
+  bottom: -30px;
+  border-top-right-radius: 30px;
+  box-shadow: 15px -15px 0 15px #ffffff;
+}
+
+.sidebar-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.sidebar-text {
+  font-size: 0.9375rem;
+  transition: opacity 0.2s;
+}
+.sidebar.collapsed .sidebar-text {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+  display: none;
+}
+.sidebar.expanded .sidebar-text {
+  opacity: 1;
+  width: auto;
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+  }
+  .sidebar-text {
+    display: none;
+  }
+  .sidebar-item {
+    justify-content: center;
+    padding: 1rem;
+  }
+}

@@ -1,4 +1,7 @@
+
 import { Link } from 'react-router-dom'
+import './Sidebar.css'
+
 import { useTheme } from '../contexts/ThemeContext'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { useQuery } from 'convex/react'
@@ -65,10 +68,7 @@ function Sidebar({ currentPath }) {
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
-      {/* Barra com gradiente verde que expande */}
-      <aside className={`flex flex-col h-full bg-gradient-to-b from-emerald-900 via-emerald-950 to-black transition-all duration-300 relative rounded-tr-xl rounded-br-xl overflow-visible ${
-        isExpanded ? 'w-64' : 'w-20'
-      }`}>
+      <aside className={`sidebar${isExpanded ? ' expanded' : ' collapsed'}`}> 
         {/* Logo no topo */}
         <div className="p-4 flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shadow-lg flex-shrink-0">
@@ -83,97 +83,87 @@ function Sidebar({ currentPath }) {
         </div>
 
         {/* Menu items */}
-        <nav className="flex-1 overflow-y-auto pl-3 pr-0 py-6 space-y-2">
+        <nav className="sidebar-menu">
           {menuItems.map((item, index) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 h-12 transition-all duration-300 ${
-                isActive(item.path)
-                  ? isExpanded
-                    ? 'bg-white dark:bg-gray-900 text-emerald-700 dark:text-emerald-400 rounded-l-[2rem] shadow-lg font-semibold pl-3 pr-6'
-                    : 'bg-white dark:bg-gray-900 text-emerald-700 dark:text-emerald-400 rounded-full w-14 justify-center mx-auto'
-                  : 'text-white hover:bg-white/10 rounded-2xl mx-3 px-3'
-              }`}
+              className={`sidebar-item${isActive(item.path) && isExpanded ? ' active' : ''}`}
             >
-              <span
-                className={`material-symbols-outlined text-[24px] flex-shrink-0 transition-all ${
-                  isActive(item.path) ? "font-bold" : ""
-                }`}
-                style={isActive(item.path) ? { fontVariationSettings: "'FILL' 1, 'wght' 600" } : {}}
-              >
+              <span className="sidebar-icon material-symbols-outlined">
                 {item.icon}
               </span>
               {isExpanded && (
-                <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
-                  {item.label}
-                </span>
+                <span className="sidebar-text">{item.label}</span>
               )}
             </Link>
           ))}
         </nav>
 
-        {/* Ícones inferiores */}
-        <div className="pl-3 pr-0 py-3 space-y-2 border-t border-white/10">
-          <Link
-            to="/configuracoes"
-            className={`flex items-center gap-3 h-12 transition-all duration-300 ${
-              currentPath === '/configuracoes'
-                ? isExpanded
-                  ? 'bg-white dark:bg-gray-900 text-emerald-700 dark:text-emerald-400 rounded-l-[2rem] shadow-lg font-semibold pl-3 pr-6'
-                  : 'bg-white dark:bg-gray-900 text-emerald-700 dark:text-emerald-400 rounded-full w-14 justify-center mx-auto'
-                : 'text-white hover:bg-white/10 rounded-2xl mx-3 px-3'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[24px] flex-shrink-0">settings</span>
-            {isExpanded && (
-              <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
-                Configurações
-              </span>
-            )}
-          </Link>
+        {/* Configurações (acima do rodapé) */}
+        <div>
+          <div className="sidebar-menu">
+            <Link
+              to="/configuracoes"
+              className={`sidebar-item${currentPath === '/configuracoes' && isExpanded ? ' active' : ''}`}
+            >
+              <span className="sidebar-icon material-symbols-outlined">settings</span>
+              {isExpanded && <span className="sidebar-text">Configurações</span>}
+            </Link>
+          </div>
+        </div>
 
-          <button
-            onClick={() => {
-              const html = document.documentElement
-              if (html.classList.contains('dark')) {
-                html.classList.remove('dark')
-                localStorage.setItem('theme', 'light')
-              } else {
-                html.classList.add('dark')
-                localStorage.setItem('theme', 'dark')
-              }
-            }}
-            className="flex items-center gap-3 h-12 px-3 mx-3 text-white hover:bg-white/10 rounded-2xl transition-all duration-300 w-auto"
-          >
-            <span className="material-symbols-outlined text-[24px] flex-shrink-0">
-              {document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode'}
-            </span>
-            {isExpanded && (
-              <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
-                {document.documentElement.classList.contains('dark') ? 'Modo Claro' : 'Modo Escuro'}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-3 h-12 px-3 mx-3 text-white hover:bg-white/10 rounded-2xl transition-all duration-300 w-auto relative"
-          >
-            <div
-              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-9 h-9 ring-2 ring-white/30 flex-shrink-0"
-              style={{
-                backgroundImage: user?.imageUrl 
-                  ? `url("${user.imageUrl}")`
-                  : 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBkxdMCsUSae2X4zyWR-qGZD7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMOlcbNbXV64J4imo4x94pZs_N5vRV204jNaiIMybw2cXLyk_CKt1vftRBOSIlayZVKI5mrCvqo4xq2o44EZXryEPkeAlzC4vY8iDHJzMrq7trZ5bLH5YO7GJNu1GOrPXCoHb83hbx8LCOhawLGD3OBDn8zbRxQx5etgAgMMQYhY905RDZWl2O_0EWqML9GP2UqttG4P6pMnqmhFfqo")',
+        {/* Rodapé fixo: dark mode e usuário */}
+        <div style={{marginTop: 'auto', padding: '1.5rem 0 0 0'}}>
+          <div className="sidebar-menu">
+            <button
+              onClick={() => {
+                const html = document.documentElement
+                if (html.classList.contains('dark')) {
+                  html.classList.remove('dark')
+                  localStorage.setItem('theme', 'light')
+                } else {
+                  html.classList.add('dark')
+                  localStorage.setItem('theme', 'dark')
+                }
               }}
-            />
-            {isExpanded && (
-              <div className="flex flex-col overflow-hidden">
-                <p className="text-sm font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis">{userName}</p>
-              </div>
-            )}
-          </button>
+              className="sidebar-item"
+              style={{background: 'none', border: 'none'}}
+            >
+              <span className="sidebar-icon material-symbols-outlined">
+                {document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode'}
+              </span>
+              {isExpanded && <span className="sidebar-text">{document.documentElement.classList.contains('dark') ? 'Modo Claro' : 'Modo Escuro'}</span>}
+            </button>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="sidebar-item"
+              style={{background: 'none', border: 'none', position: 'relative', justifyContent: 'flex-start', paddingLeft: '1.5rem', marginLeft: 0}}
+            >
+              <div
+                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-9 h-9 ring-2 ring-white/30 flex-shrink-0"
+                style={{
+                  ...((user?.imageUrl)
+                    ? { backgroundImage: `url("${user.imageUrl}")` }
+                    : { backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBkxdMCsUSae2X4zyWR-qGZD7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMOlcbNbXV64J4imo4x94pZs_N5vRV204jNaiIMybw2cXLyk_CKt1vftRBOSIlayZVKI5mrCvqo4xq2o44EZXryEPkeAlzC4vY8iDHJzMrq7trZ5bLH5YO7GJNu1GOrPXCoHb83hbx8LCOhawLGD3OBDn8zbRxQx5etgAgMMQYhY905RDZWl2O_0EWqML9GP2UqttG4P6pMnqmhFfqo")' }),
+                  marginLeft: 0,
+                  left: 0
+                }}
+                style={{
+                  backgroundImage: user?.imageUrl 
+                    ? `url("${user.imageUrl}")`
+                    : 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBkxdMCsUSae2X4zyWR-qGZD7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMOlcbNbXV64J4imo4x94pZs_N5vRV204jNaiIMybw2cXLyk_CKt1vftRBOSIlayZVKI5mrCvqo4xq2o44EZXryEPkeAlzC4vY8iDHJzMrq7trZ5bLH5YO7GJNu1GOrPXCoHb83hbx8LCOhawLGD3OBDn8zbRxQx5etgAgMMQYhY905RDZWl2O_0EWqML9GP2UqttG4P6pMnqmhFfqo")',
+                }}
+              />
+              {isExpanded ? (
+                <div className="flex flex-col overflow-hidden">
+                  <p className="sidebar-text font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{userName}</p>
+                </div>
+              ) : (
+                <span className="sr-only">{userName}</span>
+              )}
+            </button>
+          </div>
         </div>
       </aside>
 
