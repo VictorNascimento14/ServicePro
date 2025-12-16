@@ -113,11 +113,23 @@ function Agendar() {
 
   const handleConfirmAppointment = async () => {
     if (!selectedService || !selectedTime || !selectedProfessional || !user || !userProfile) {
+      console.log('❌ Dados incompletos para agendamento')
       return
     }
 
+    console.log('🎯 Iniciando agendamento...')
+    console.log('Dados do agendamento:', {
+      ownerId: selectedBarbearia.clerkId,
+      professionalClerkId: selectedProfessional.clerkId,
+      clientClerkId: user.id,
+      clientName: userProfile.userName || user.fullName || 'Cliente',
+      clientEmail: user.emailAddresses?.[0]?.emailAddress,
+      clientPhone: userProfile.phone,
+    })
+
     try {
-      await createAppointment({
+      console.log('📞 Chamando createAppointment...')
+      const result = await createAppointment({
         ownerId: selectedBarbearia.clerkId,
         professionalClerkId: selectedProfessional.clerkId,
         clientClerkId: user.id,
@@ -130,6 +142,8 @@ function Agendar() {
         dayOfWeek: allDates[currentDateIndex].dayOfWeek,
         totalValue: selectedService.price,
       })
+      
+      console.log('✅ Agendamento criado com sucesso! ID:', result)
 
       setShowConfirmModal(false)
       setShowAvailabilityModal(false)
@@ -138,7 +152,7 @@ function Agendar() {
       
       alert('Agendamento confirmado com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error)
+      console.error('❌ Erro ao criar agendamento:', error)
       alert('Erro ao criar agendamento. Tente novamente.')
     }
   }

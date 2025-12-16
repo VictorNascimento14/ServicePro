@@ -5,7 +5,7 @@ import { api } from '../../convex/_generated/api'
 
 function Agenda() {
   const { user } = useUser()
-  const [viewMode, setViewMode] = useState('availability') // 'availability' ou 'appointments'
+  const [viewMode, setViewMode] = useState('appointments') // 'availability' ou 'appointments'
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [showHoursModal, setShowHoursModal] = useState(false)
   const [selectedDay, setSelectedDay] = useState(null)
@@ -357,41 +357,41 @@ function Agenda() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex gap-4 flex-1">
-                          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <span className="material-symbols-outlined text-primary text-2xl">event</span>
+                          <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <span className="material-symbols-outlined text-primary text-3xl">event</span>
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-lg font-bold text-text-main dark:text-white mb-2">
+                            <h3 className="text-xl font-bold text-text-main dark:text-white mb-3">
                               {appointment.service?.name || 'Serviço'}
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-base">
                               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                <span className="material-symbols-outlined text-base">person</span>
+                                <span className="material-symbols-outlined text-lg">person</span>
                                 <span>{appointment.clientName}</span>
                               </div>
                               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                <span className="material-symbols-outlined text-base">calendar_today</span>
+                                <span className="material-symbols-outlined text-lg">calendar_today</span>
                                 <span>{appointment.date}</span>
                               </div>
                               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                <span className="material-symbols-outlined text-base">schedule</span>
+                                <span className="material-symbols-outlined text-lg">schedule</span>
                                 <span>{appointment.time}</span>
                               </div>
                               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                <span className="material-symbols-outlined text-base">calendar_view_week</span>
+                                <span className="material-symbols-outlined text-lg">calendar_view_week</span>
                                 <span>{appointment.dayOfWeek}</span>
                               </div>
                             </div>
                             {appointment.clientPhone && (
-                              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                <span className="material-symbols-outlined text-base">phone</span>
+                              <div className="flex items-center gap-2 text-base text-gray-600 dark:text-gray-400 mt-3">
+                                <span className="material-symbols-outlined text-lg">phone</span>
                                 <span>{appointment.clientPhone}</span>
                               </div>
                             )}
                           </div>
                         </div>
                         <div className="text-right ml-4">
-                          <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-2 ${
+                          <div className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium mb-2 ${
                             appointment.status === 'confirmed' 
                               ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                               : appointment.status === 'cancelled'
@@ -528,4 +528,5 @@ function Agenda() {
 }
 
 export default Agenda
+
 

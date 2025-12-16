@@ -250,3 +250,4 @@ npm run dev
 - Verifique se o domínio está configurado no Clerk
 - No Convex, verifique as configurações de CORS
 
+

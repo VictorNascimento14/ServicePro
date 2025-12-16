@@ -369,10 +369,39 @@ export const createClientAppointment = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
+    // Criar cliente automaticamente se não existir
+    if (args.clientEmail || args.clientPhone) {
+      const existingCustomers = await ctx.db
+        .query("customers")
+        .filter((q) => q.eq(q.field("ownerId"), args.ownerId))
+        .collect();
+      
+      // Verificar se já existe cliente com mesmo email E telefone
+      const customerExists = existingCustomers.some(c => {
+        const sameEmail = args.clientEmail && c.email === args.clientEmail;
+        const samePhone = args.clientPhone && c.phone === args.clientPhone;
+        return (sameEmail && samePhone) || (sameEmail && !args.clientPhone);
+      });
+
+      if (!customerExists) {
+        await ctx.db.insert("customers", {
+          ownerId: args.ownerId,
+          fullName: args.clientName,
+          email: args.clientEmail,
+          phone: args.clientPhone,
+          registeredAt: now,
+          status: "active",
+          tags: [],
+          avgRating: 0,
+          totalVisits: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     // Buscar informações do serviço
     const service = await ctx.db.get(args.serviceId);
-
-    // Criar agendamento
     const appointmentId = await ctx.db.insert("appointments", {
       ownerId: args.ownerId,
       professionalClerkId: args.professionalClerkId,

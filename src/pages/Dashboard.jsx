@@ -3,14 +3,26 @@ import { useUser, useClerk } from '@clerk/clerk-react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {
   const { user } = useUser()
   const { signOut } = useClerk()
+  const navigate = useNavigate()
   const resetProfile = useMutation(api.users.resetUserProfile)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showNewClientModal, setShowNewClientModal] = useState(false)
+  const [newClientData, setNewClientData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    notes: ''
+  })
   const markAsRead = useMutation(api.notifications.markAsRead)
   const markAllAsRead = useMutation(api.notifications.markAllAsRead)
+  const createCustomer = useMutation(api.users.createCustomer)
+
   
   // Buscar perfil do usuário e configurações
   const userProfile = useQuery(api.users.getUserProfile, user ? { clerkId: user.id } : "skip")
@@ -250,46 +262,46 @@ function Dashboard() {
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scroll-smooth">
         {/* Quick Stats */}
         <section className={`grid grid-cols-1 gap-4 md:gap-6 ${userProfile?.autoApproveClients ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
-          <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-32 relative overflow-hidden group">
+          <div className="bg-white dark:bg-surface-dark p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group">
             <div className="absolute right-[-10px] top-[-10px] opacity-5 dark:opacity-10 group-hover:scale-110 transition-transform duration-500">
-              <span className="material-symbols-outlined text-[100px] text-primary">calendar_clock</span>
+              <span className="material-symbols-outlined text-[120px] text-primary">calendar_clock</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-text-muted dark:text-gray-400">Agendamentos Hoje</p>
-              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">{todayAppointments}</h3>
+              <p className="text-base font-medium text-text-muted dark:text-gray-400">Agendamentos Hoje</p>
+              <h3 className="text-4xl font-bold mt-2 text-text-main dark:text-white">{todayAppointments}</h3>
             </div>
-            <div className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-              <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+            <div className="flex items-center gap-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+              <span className="material-symbols-outlined text-[18px]">calendar_today</span>
               <span>Hoje</span>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-32 relative overflow-hidden group">
+          <div className="bg-white dark:bg-surface-dark p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group">
             <div className="absolute right-[-10px] top-[-10px] opacity-5 dark:opacity-10 group-hover:scale-110 transition-transform duration-500">
-              <span className="material-symbols-outlined text-[100px] text-primary">payments</span>
+              <span className="material-symbols-outlined text-[120px] text-primary">payments</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-text-muted dark:text-gray-400">Faturamento Previsto</p>
-              <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">
+              <p className="text-base font-medium text-text-muted dark:text-gray-400">Faturamento Previsto</p>
+              <h3 className="text-4xl font-bold mt-2 text-text-main dark:text-white">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(expectedRevenue)}
               </h3>
             </div>
-            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-2">
-              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: expectedRevenue > 0 ? '65%' : '0%' }}></div>
+            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 mt-2">
+              <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: expectedRevenue > 0 ? '65%' : '0%' }}></div>
             </div>
           </div>
 
           {/* Card de Solicitações Pendentes - só aparece se aprovação automática NÃO estiver ativada */}
           {!userProfile?.autoApproveClients && (
-            <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-32 relative overflow-hidden group">
+            <div className="bg-white dark:bg-surface-dark p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group">
               <div className="absolute right-[-10px] top-[-10px] opacity-5 dark:opacity-10 group-hover:scale-110 transition-transform duration-500">
-                <span className="material-symbols-outlined text-[100px] text-orange-400">notifications_active</span>
+                <span className="material-symbols-outlined text-[120px] text-orange-400">notifications_active</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-text-muted dark:text-gray-400">Solicitações Pendentes</p>
-                <h3 className="text-3xl font-bold mt-1 text-text-main dark:text-white">{pendingRequestsCount}</h3>
+                <p className="text-base font-medium text-text-muted dark:text-gray-400">Solicitações Pendentes</p>
+                <h3 className="text-4xl font-bold mt-2 text-text-main dark:text-white">{pendingRequestsCount}</h3>
               </div>
-              <p className="text-xs text-text-muted dark:text-gray-500 mt-1">
+              <p className="text-sm text-text-muted dark:text-gray-500 mt-1">
                 {pendingRequestsCount > 0 ? 'Requer sua atenção' : 'Nenhuma pendente'}
               </p>
             </div>
@@ -502,13 +514,21 @@ function Dashboard() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-text-main dark:text-white">Agenda do Dia</h3>
-                <a className="text-sm font-semibold text-primary hover:underline" href="#">
+                <button 
+                  onClick={(e) => {
+                    e.currentTarget.classList.add('scale-95', 'opacity-70')
+                    setTimeout(() => {
+                      navigate('/agenda')
+                    }, 200)
+                  }}
+                  className="text-sm font-semibold text-primary transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg"
+                >
                   Ver tudo
-                </a>
+                </button>
               </div>
 
-              <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col">
+                <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[280px] overflow-y-auto">
                   {appointments && appointments.length > 0 ? (
                     appointments.map((appointment, idx) => (
                       <div
@@ -554,7 +574,7 @@ function Dashboard() {
                   )}
                 </div>
                 {appointments && appointments.length > 0 && (
-                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 text-center border-t border-gray-100 dark:border-gray-800">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 text-center border-t border-gray-100 dark:border-gray-800 rounded-b-2xl">
                     <p className="text-xs text-text-muted font-medium">Fim dos agendamentos de hoje</p>
                   </div>
                 )}
@@ -617,13 +637,14 @@ function Dashboard() {
               <h3 className="text-lg font-bold text-text-main dark:text-white mb-4">Acesso Rápido</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: 'person_add', label: 'Novo Cliente', color: 'blue' },
-                  { icon: 'block', label: 'Bloquear Horário', color: 'purple' },
-                  { icon: 'inventory_2', label: 'Estoque', color: 'orange' },
-                  { icon: 'chat', label: 'Mensagens', color: 'teal' },
+                  { icon: 'person_add', label: 'Novo Cliente', color: 'blue', onClick: () => setShowNewClientModal(true) },
+                  { icon: 'block', label: 'Bloquear Horário', color: 'purple', onClick: () => {} },
+                  { icon: 'inventory_2', label: 'Estoque', color: 'orange', onClick: () => {} },
+                  { icon: 'chat', label: 'Mensagens', color: 'teal', onClick: () => {} },
                 ].map((action, idx) => (
                   <button
                     key={idx}
+                    onClick={action.onClick}
                     className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 transition-all group"
                   >
                     <div
@@ -638,6 +659,131 @@ function Dashboard() {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Modal Novo Cliente */}
+        {showNewClientModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-text-main dark:text-white">Novo Cliente</h2>
+                  <button
+                    onClick={() => {
+                      setShowNewClientModal(false)
+                      setNewClientData({ fullName: '', email: '', phone: '', birthDate: '', notes: '' })
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault()
+                  try {
+                    await createCustomer({
+                      ownerId: userProfile?.linkedToOwnerId || user?.id,
+                      fullName: newClientData.fullName,
+                      email: newClientData.email || undefined,
+                      phone: newClientData.phone || undefined,
+                      birthDate: newClientData.birthDate || undefined,
+                      notes: newClientData.notes || undefined,
+                    })
+                    setShowNewClientModal(false)
+                    setNewClientData({ fullName: '', email: '', phone: '', birthDate: '', notes: '' })
+                  } catch (error) {
+                    console.error('Erro ao criar cliente:', error)
+                    alert('Erro ao criar cliente. Tente novamente.')
+                  }
+                }} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-main dark:text-gray-300 mb-2">
+                      Nome Completo *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newClientData.fullName}
+                      onChange={(e) => setNewClientData({ ...newClientData, fullName: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Digite o nome completo"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-main dark:text-gray-300 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={newClientData.email}
+                      onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-main dark:text-gray-300 mb-2">
+                      Telefone
+                    </label>
+                    <input
+                      type="tel"
+                      value={newClientData.phone}
+                      onChange={(e) => setNewClientData({ ...newClientData, phone: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-main dark:text-gray-300 mb-2">
+                      Data de Nascimento
+                    </label>
+                    <input
+                      type="date"
+                      value={newClientData.birthDate}
+                      onChange={(e) => setNewClientData({ ...newClientData, birthDate: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-main dark:text-gray-300 mb-2">
+                      Observações
+                    </label>
+                    <textarea
+                      value={newClientData.notes}
+                      onChange={(e) => setNewClientData({ ...newClientData, notes: e.target.value })}
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                      placeholder="Anotações sobre o cliente..."
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewClientModal(false)
+                        setNewClientData({ fullName: '', email: '', phone: '', birthDate: '', notes: '' })
+                      }}
+                      className="flex-1 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      Adicionar Cliente
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>

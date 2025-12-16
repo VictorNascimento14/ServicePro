@@ -135,6 +135,68 @@ export const update = mutation({
 
 // CLIENTES
 
+// Migrar clientes de agendamentos existentes
+export const migrateClientsFromAppointments = mutation({
+  args: { ownerId: v.string() },
+  handler: async (ctx, args) => {
+    // Buscar todos os agendamentos
+    const appointments = await ctx.db
+      .query("appointments")
+      .filter((q) => q.eq(q.field("ownerId"), args.ownerId))
+      .collect();
+
+    let created = 0;
+    
+    for (const apt of appointments) {
+      if (!apt.clientEmail && !apt.clientPhone) continue;
+      
+      // Verificar se cliente já existe
+      const existing = await ctx.db
+        .query("customers")
+        .filter((q) => q.eq(q.field("ownerId"), args.ownerId))
+        .collect();
+      
+      const exists = existing.some(c => 
+        (apt.clientEmail && c.email === apt.clientEmail) ||
+        (apt.clientPhone && c.phone === apt.clientPhone)
+      );
+      
+      if (!exists) {
+        await ctx.db.insert("customers", {
+          ownerId: args.ownerId,
+          fullName: apt.clientName,
+          email: apt.clientEmail,
+          phone: apt.clientPhone,
+          registeredAt: apt.createdAt,
+          status: "active",
+          tags: [],
+          avgRating: 0,
+          totalVisits: 1,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        created++;
+      }
+    }
+    
+    return { created, total: appointments.length };
+  },
+});
+
+// Buscar TODOS os clientes (debug)
+export const getAllCustomers = query({
+  args: { ownerId: v.string() },
+  handler: async (ctx, args) => {
+    const allCustomers = await ctx.db
+      .query("customers")
+      .filter((q) => q.eq(q.field("ownerId"), args.ownerId))
+      .collect();
+    
+    console.log(`🔍 Total de clientes para ownerId ${args.ownerId}:`, allCustomers.length);
+    return allCustomers;
+  },
+});
+
 // Buscar todos os clientes ativos
 export const getActiveCustomers = query({
   args: { ownerId: v.string() },
