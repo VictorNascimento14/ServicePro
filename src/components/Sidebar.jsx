@@ -88,7 +88,7 @@ function Sidebar({ currentPath }) {
             <Link
               key={item.path}
               to={item.path}
-              className={`sidebar-item${isActive(item.path) && isExpanded ? ' active' : ''}`}
+              className={`sidebar-item${isActive(item.path) ? ' active' : ''}`}
             >
               <span className="sidebar-icon material-symbols-outlined">
                 {item.icon}
@@ -241,4 +241,5 @@ function Sidebar({ currentPath }) {
 }
 
 export default Sidebar
+
 

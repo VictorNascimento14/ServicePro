@@ -251,3 +251,4 @@ npm run dev
 - No Convex, verifique as configurações de CORS
 
 
+
