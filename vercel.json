@@ -1,12 +1,6 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "my-clerk-app/next.config.ts",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "my-clerk-app/$1" }
+    { "src": "package.json", "use": "@vercel/static-build" }
   ]
 }
