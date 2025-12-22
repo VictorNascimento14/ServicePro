@@ -140,24 +140,17 @@ function Sidebar({ currentPath }) {
               className="sidebar-item"
               style={{background: 'none', border: 'none', position: 'relative', justifyContent: 'flex-start', paddingLeft: '1.5rem', marginLeft: 0}}
             >
-              <div
-                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-9 h-9 ring-2 ring-white/30 flex-shrink-0"
-                style={{
-                  ...((user?.imageUrl)
-                    ? { backgroundImage: `url("${user.imageUrl}")` }
-                    : { backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBkxdMCsUSae2X4zyWR-qGZD7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMOlcbNbXV64J4imo4x94pZs_N5vRV204jNaiIMybw2cXLyk_CKt1vftRBOSIlayZVKI5mrCvqo4xq2o44EZXryEPkeAlzC4vY8iDHJzMrq7trZ5bLH5YO7GJNu1GOrPXCoHb83hbx8LCOhawLGD3OBDn8zbRxQx5etgAgMMQYhY905RDZWl2O_0EWqML9GP2UqttG4P6pMnqmhFfqo")' }),
+              {userName ? (
+                <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-9 h-9 ring-2 ring-white/30 flex-shrink-0" style={{
+                  backgroundImage: user?.imageUrl
+                    ? `url(${user.imageUrl})`
+                    : 'url("https://lh3.googleusercontent.com/aida-public/AB6AXUbKxdMCSuSae2K4ZyWR-qGZd7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMolcbNbXV64J4imo4x94p5vRRV204JNaiMybw2CxLyk_CKt1vfRtBOSltlyaZVKI5mrCvqo4xq2044EZKYrEpkEaL4cVY8iDHJZmMrq7rTZsYO7GJNu1GorPXC0h8b3hbx8kL8OhawLGD30B8n8zbRxQx5etgAgMMQYyhY905RDzWL20_0EWqML9GP2UqtG4Pf6_hffqo")',
                   marginLeft: 0,
                   left: 0
-                }}
-                style={{
-                  backgroundImage: user?.imageUrl 
-                    ? `url("${user.imageUrl}")`
-                    : 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBkxdMCsUSae2X4zyWR-qGZD7HR24dRvyZGe-GeIK52OInxnmJLtub4pfIpaMOlcbNbXV64J4imo4x94pZs_N5vRV204jNaiIMybw2cXLyk_CKt1vftRBOSIlayZVKI5mrCvqo4xq2o44EZXryEPkeAlzC4vY8iDHJzMrq7trZ5bLH5YO7GJNu1GOrPXCoHb83hbx8LCOhawLGD3OBDn8zbRxQx5etgAgMMQYhY905RDZWl2O_0EWqML9GP2UqttG4P6pMnqmhFfqo")',
-                }}
-              />
-              {isExpanded ? (
-                <div className="flex flex-col overflow-hidden">
-                  <p className="sidebar-text font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{userName}</p>
+                }}>
+                  <div className="flex flex-col overflow-hidden">
+                    <p className="sidebar-text font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{userName}</p>
+                  </div>
                 </div>
               ) : (
                 <span className="sr-only">{userName}</span>
